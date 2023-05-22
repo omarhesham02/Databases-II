@@ -1,6 +1,11 @@
+package src.main.java;
+import java.io.File;
+import java.util.*;
+import com.opencsv.CSVWriter;
 import exceptions.DBAppException;
 
-class DBApp {
+public class DBApp  {
+    public static final int N = 200;
     
     /**
      * Following method creates one table only
@@ -14,7 +19,52 @@ class DBApp {
      * @throws DBAppException
      */
     public void createTable(String strTableName, String strClusteringKeyColumn, Hashtable<String,String> htblColNameType, Hashtable<String,String> htblColNameMin, Hashtable<String,String> htblColNameMax, Hashtable<String,String> htblForeignKeys, String[] computedCols ) throws DBAppException {
+        // Open metadata file
+        File metadata = new File("./metadata.csv");
+        
 
+        // Enumerating the elements of the hashtable
+        Enumeration<String> keys = htblColNameType.keys();
+        
+        // Iterate over the given columns
+        while (keys.hasMoreElements()) {
+            String colName = keys.nextElement();
+            
+            // Get attribute details based on the column name
+            String attType = htblColNameType.get(colName);
+            String attMax = htblColNameMax.get(colName);
+            String attMin = htblColNameMin.get(colName);
+
+            // Check if current column is cluster key
+            boolean isClusterKey = strClusteringKeyColumn.equals(colName);
+
+            // Initialize indexed to null
+            String indexName = "null";
+            String indexType = "null";
+
+            // Check if foreign key and calculate values
+            boolean isForeignKey = htblForeignKeys.containsKey(colName);
+            String foreignTable = "null";
+            String foreignColumn = "null";
+            if (isForeignKey) {
+                String[] data = htblForeignKeys.get(colName).split(".");
+                foreignTable = data[0]; 
+                foreignColumn = data[1];
+            }
+
+            // Check if this is a computed column
+            boolean isComputed = false;
+            for (String curr : computedCols) {
+                if (curr.equals(colName)) {
+                    isComputed = true;
+                    break;
+                }
+            }
+
+            // Append this column to the metadata
+        }
+
+        // Close metadata file
     }
 
     /**
@@ -25,7 +75,14 @@ class DBApp {
      * @throws DBAppException when only one or more than 2 column names are passed
      */
     public void createIndex(String strTableName, String[] strarrColName) throws DBAppException {
+        // If strarrColName not length 2 return
+        if (strarrColName.length != 2) {
+            throw new DBAppException("Can only create a grid index on two columns");
+        }
 
+        // TODO: Set path to the table's directory
+
+        // TODO: Implement grid index on given 2 columns
     }
 
     /**

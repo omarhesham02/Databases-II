@@ -6,12 +6,11 @@ public class csvtest {
 	public static void main(String[] args) {
 		
 		try {
-			//create file writer with parameter true in order to maintain values
 			
-					//create or edit the csv has same steps except in create we must specify the directory of the new csv file
-		        FileWriter fw = new FileWriter("C:\\Users\\mzaka\\Desktop\\Documents\\literallyme.csv",true);
-
-
+	    //create or edit the csv has same steps except in create we must specify the directory of the new csv file
+	    FileWriter fw = new FileWriter("C:\\Users\\mzaka\\Desktop\\Documents\\literallyme.csv",true);
+			
+	    //create FileWriter with parameter true in order to maintain values
 			
 			//way 1 
             fw.append("Ryan Gosling,American Psycho\n");

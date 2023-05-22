@@ -5,10 +5,13 @@ public class csvtest {
 
 	public static void main(String[] args) {
 		
-		
 		try {
 			//create file writer with parameter true in order to maintain values
-			FileWriter fw = new FileWriter("Heroes.csv",true);
+			
+					//create or edit the csv has same steps
+		        FileWriter fw = new FileWriter("C:\\Users\\mzaka\\Desktop\\Documents\\literallyme.csv",true);
+
+
 			
 			//way 1 
             fw.append("Ryan Gosling,American Psycho\n");

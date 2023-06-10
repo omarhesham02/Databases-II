@@ -1,4 +1,6 @@
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
@@ -131,9 +133,35 @@ public class DBApp  {
             throw new DBAppException("Can only create a grid index on two columns");
         }
 
-        // TODO: Set path to the table's directory
-
+        // Set path to the table's directory
+        final File TABLE_DIR = new File("./tables/" + strTableName);
+        
         // TODO: Implement grid index on given 2 columns
+        // Get min and max from the metadata
+        Hashtable<String, String> htblColNameMin = new Hashtable<String, String>();
+        Hashtable<String, String> htblColNameMax = new Hashtable<String, String>();
+        String line = "";  
+        String splitBy = ",";  
+        try {
+            // Iterate over columns
+            for (String colName : strarrColName) {
+                BufferedReader br = new BufferedReader(new FileReader("metadata.csv"));  
+                
+                // Look for this column
+                while ((line = br.readLine()) != null) {  
+                    String[] row = line.split(splitBy);
+
+                    if (!row[1].equals(colName)) continue;
+
+                    htblColNameMin.put(colName, row[6]);
+                    htblColNameMax.put(colName, row[7]);
+                }
+
+                br.close();
+            }
+        } catch (IOException e) {  
+            e.printStackTrace();  
+        }  
     }
 
     /**

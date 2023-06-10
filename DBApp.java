@@ -11,32 +11,44 @@ public class DBApp  {
     public static final int N = 200;
 
     public static void main(String[] args) {
-        DBApp dbApp = new DBApp( );
+        DBApp dbApp = new DBApp();
         
         // Create table
+        // try {
+        //     Hashtable<String, String> htblColNameType = new Hashtable<String, String>();
+        //     htblColNameType.put("ProductID", "java.lang.Integer");
+        //     htblColNameType.put("ProductName", "java.lang.String");
+        //     htblColNameType.put("ProductPrice", "java.lang.Double");
+            
+        //     Hashtable<String, String> htblColNameMin = new Hashtable<String, String>();
+        //     htblColNameMin.put("ProductID", "0");
+        //     htblColNameMin.put("ProductName", "A");
+        //     htblColNameMin.put("ProductPrice", "0");
+            
+        //     Hashtable<String, String> htblColNameMax = new Hashtable<String, String>();
+        //     htblColNameMax.put("ProductID", "1000");
+        //     htblColNameMax.put("ProductName", "ZZZZZZZZZZZ");
+        //     htblColNameMax.put("ProductPrice", "100000");
+            
+        //     Hashtable<String, String> htblForeignKeys = new Hashtable<String, String>();
+            
+        //     String[] computedCols = {};
+            
+        //     dbApp.createTable("Product", " ProductID ", htblColNameType, htblColNameMin, htblColNameMax, htblForeignKeys, computedCols);
+        // } catch (DBAppException e) {
+        //     System.err.println("Can't Create Table.");
+        //     e.printStackTrace();
+        // }
+
+        // Test Table class
         try {
-            Hashtable<String, String> htblColNameType = new Hashtable<String, String>();
-            htblColNameType.put("ProductID", "java.lang.Integer");
-            htblColNameType.put("ProductName", "java.lang.String");
-            htblColNameType.put("ProductPrice", "java.lang.Double");
-            
-            Hashtable<String, String> htblColNameMin = new Hashtable<String, String>();
-            htblColNameMin.put("ProductID", "0");
-            htblColNameMin.put("ProductName", "A");
-            htblColNameMin.put("ProductPrice", "0");
-            
-            Hashtable<String, String> htblColNameMax = new Hashtable<String, String>();
-            htblColNameMax.put("ProductID", "1000");
-            htblColNameMax.put("ProductName", "ZZZZZZZZZZZ");
-            htblColNameMax.put("ProductPrice", "100000");
-            
-            Hashtable<String, String> htblForeignKeys = new Hashtable<String, String>();
-            
-            String[] computedCols = {};
-            
-            dbApp.createTable("Product", " ProductID ", htblColNameType, htblColNameMin, htblColNameMax, htblForeignKeys, computedCols);
+            Table tbl = new Table("Product");
+            String [] colNames = tbl.getColNames();
+
+            for (String colName : colNames) {
+                System.out.println(colName);
+            }
         } catch (DBAppException e) {
-            System.err.println("Can't Create Table.");
             e.printStackTrace();
         }
     }
@@ -137,31 +149,7 @@ public class DBApp  {
         final File TABLE_DIR = new File("./tables/" + strTableName);
         
         // TODO: Implement grid index on given 2 columns
-        // Get min and max from the metadata
-        Hashtable<String, String> htblColNameMin = new Hashtable<String, String>();
-        Hashtable<String, String> htblColNameMax = new Hashtable<String, String>();
-        String line = "";  
-        String splitBy = ",";  
-        try {
-            // Iterate over columns
-            for (String colName : strarrColName) {
-                BufferedReader br = new BufferedReader(new FileReader("metadata.csv"));  
-                
-                // Look for this column
-                while ((line = br.readLine()) != null) {  
-                    String[] row = line.split(splitBy);
-
-                    if (!row[1].equals(colName)) continue;
-
-                    htblColNameMin.put(colName, row[6]);
-                    htblColNameMax.put(colName, row[7]);
-                }
-
-                br.close();
-            }
-        } catch (IOException e) {  
-            e.printStackTrace();  
-        }  
+        
     }
 
     /**

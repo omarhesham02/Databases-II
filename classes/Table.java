@@ -1,4 +1,4 @@
-package src.main.java;
+package classes;
 import java.util.*;
 
 public class Table {

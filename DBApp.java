@@ -1,11 +1,42 @@
-package src.main.java;
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.*;
-import com.opencsv.CSVWriter;
 import exceptions.DBAppException;
+import classes.*;
 
 public class DBApp  {
     public static final int N = 200;
+
+    public static void main(String[] args) {
+        DBApp dbApp = new DBApp( );
+        
+        Hashtable<String, String> htblColNameType = new Hashtable<String, String>();
+        htblColNameType.put("ProductID", "java.lang.Integer");
+        htblColNameType.put("ProductName", "java.lang.String");
+        htblColNameType.put("ProductPrice", "java.lang.Double");
+        
+        Hashtable<String, String> htblColNameMin = new Hashtable<String, String>();
+        htblColNameMin.put("ProductID", "0");
+        htblColNameMin.put("ProductName", "A");
+        htblColNameMin.put("ProductPrice", "0");
+        
+        Hashtable<String, String> htblColNameMax = new Hashtable<String, String>();
+        htblColNameMax.put("ProductID", "1000");
+        htblColNameMax.put("ProductName", "ZZZZZZZZZZZ");
+        htblColNameMax.put("ProductPrice", "100000");
+        
+        Hashtable<String, String> htblForeignKeys = new Hashtable<String, String>();
+        
+        String[] computedCols = {};
+        
+        try {
+            dbApp.createTable("Product", " ProductID ", htblColNameType, htblColNameMin, htblColNameMax, htblForeignKeys, computedCols);
+        } catch (DBAppException e) {
+            System.err.println("Can't Create Table.");
+            e.printStackTrace();
+        }
+    }
     
     /**
      * Following method creates one table only
@@ -19,36 +50,46 @@ public class DBApp  {
      * @throws DBAppException
      */
     public void createTable(String strTableName, String strClusteringKeyColumn, Hashtable<String,String> htblColNameType, Hashtable<String,String> htblColNameMin, Hashtable<String,String> htblColNameMax, Hashtable<String,String> htblForeignKeys, String[] computedCols ) throws DBAppException {
+        // Create table folder
+        final File TABLE_DIR = new File("./tables/" + strTableName);
+        
+        // If table already exist throw error, else create folder
+        if (TABLE_DIR.exists()) {
+            throw new DBAppException("Table " + strTableName + " already exists!");
+        }
+        TABLE_DIR.mkdirs();
+        
         // Open metadata file
-        File metadata = new File("./metadata.csv");
-        
-
-        // Enumerating the elements of the hashtable
-        Enumeration<String> keys = htblColNameType.keys();
-        
-        // Iterate over the given columns
-        while (keys.hasMoreElements()) {
-            String colName = keys.nextElement();
+        FileWriter meta;
+        try {
+            meta = new FileWriter("metadata.csv", true);
             
-            // Get attribute details based on the column name
-            String attType = htblColNameType.get(colName);
+            // Enumerating the elements of the hashtable
+            Enumeration<String> keys = htblColNameType.keys();
+            
+            // Iterate over the given columns
+            while (keys.hasMoreElements()) {
+                String colName = keys.nextElement();
+                
+                // Get attribute details based on the column name
+                String attType = htblColNameType.get(colName);
             String attMax = htblColNameMax.get(colName);
             String attMin = htblColNameMin.get(colName);
-
+            
             // Check if current column is cluster key
             boolean isClusterKey = strClusteringKeyColumn.equals(colName);
-
+            
             // Initialize indexed to null
             String indexName = "null";
             String indexType = "null";
-
+            
             // Check if foreign key and calculate values
             boolean isForeignKey = htblForeignKeys.containsKey(colName);
             String foreignTable = "null";
             String foreignColumn = "null";
             if (isForeignKey) {
                 String[] data = htblForeignKeys.get(colName).split(".");
-                foreignTable = data[0]; 
+                foreignTable = data[0];
                 foreignColumn = data[1];
             }
 
@@ -60,12 +101,21 @@ public class DBApp  {
                     break;
                 }
             }
-
+            
+            // TableName, ColumnName, ColumnType, ClusteringKey, IndexName, IndexType, min, max, ForeignKey, ForeignTableName, ForeignColumnName, Compute
+            String row = strTableName + "," + colName + "," + attType + "," + isClusterKey + "," + indexName + "," + indexType + "," + attMin + "," + attMax + "," + isForeignKey + "," + foreignTable + "," + foreignColumn + "," + isComputed;
+            
             // Append this column to the metadata
+            meta.append(row + "\n");
         }
-
+        
         // Close metadata file
+        meta.flush();
+        meta.close();
+    } catch (IOException e) {
+        throw new DBAppException(e.getMessage());
     }
+}
 
     /**
      * Following method creates a grid index
@@ -125,7 +175,9 @@ public class DBApp  {
      * @throws DBAppException
      */
     public Iterator selectFromTable(SQLTerm[] arrSQLTerms, String[] strarrOperators) throws DBAppException {
-
+        ArrayList<String> results = new ArrayList<String>();
+        
+        return results.iterator();
     }
 
 }

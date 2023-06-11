@@ -12,7 +12,7 @@ import java.util.Hashtable;
 public class Page {
 
     private String strTableName;
-    private String strPageNum;
+    private int intPageNum;
     private int intCountTuples;
     private boolean isModified;
 
@@ -27,15 +27,15 @@ public class Page {
     }
 
 
-    public Page(String strPageNum) throws FileSystemException{
-        this.strPageNum = strPageNum;
-        PrintWriter pw = new PrintWriter(new File(strPageNum + ".csv"));
+    public Page(String strTableName, String intPageNum) throws FileSystemException{
+        this.intPageNum = intPageNum;
+        File PAGE_PATH = new File("./tables/" + strTableName + "/" + intPageNum);
+        PrintWriter pw = new PrintWriter(PAGE_PATH);
 
-        
     }
 
     public void insertIntoPage(Hashtable<String, Object> tuple) {
-        PrintWriter pw = new PrintWriter(this.strPageNum + ".csv");
+        PrintWriter pw = new PrintWriter(this.intPageNum + ".csv");
 
         StringBuffer csvData = new StringBuffer();
 

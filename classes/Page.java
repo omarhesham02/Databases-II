@@ -37,7 +37,7 @@ public class Page {
     public void insertIntoPage(Hashtable<String, Object> tuple) {
         PrintWriter pw = new PrintWriter(this.intPageNum + ".csv");
 
-        StringBuffer csvData = new StringBuffer();
+        StringBuilder csvData = new StringBuilder();
 
         // Get all attributes of the table containing this page
         ArrayList<String> strAttributes = new ArrayList<>();
@@ -75,14 +75,17 @@ public class Page {
 
                 // Check if the tuple to be inserted has this attribute and a value for it
                 if (tuple.containsKey(nextAttribute)) {
-                    csvData.write(tuple.get(nextAttribute));
-                    csvData.write(",");
+                    csvData.append(tuple.get(nextAttribute));
+                    csvData.append(",");
                 } else {
                     // Otherwise write an empty string
-                    csvData.write("");
-                    csvData.write(",");
+                    csvData.append("");
+                    csvData.append(",");
                 }
             }
+                // Write the tuple to the CSV file
+                pw.close(csvData.toString());
+
     }
     
     public static void main(String[] args) {

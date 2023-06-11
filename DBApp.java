@@ -88,49 +88,49 @@ public class DBApp  {
                 
                 // Get attribute details based on the column name
                 String attType = htblColNameType.get(colName);
-            String attMax = htblColNameMax.get(colName);
-            String attMin = htblColNameMin.get(colName);
-            
-            // Check if current column is cluster key
-            boolean isClusterKey = strClusteringKeyColumn.equals(colName);
-            
-            // Initialize indexed to null
-            String indexName = "null";
-            String indexType = "null";
-            
-            // Check if foreign key and calculate values
-            boolean isForeignKey = htblForeignKeys.containsKey(colName);
-            String foreignTable = "null";
-            String foreignColumn = "null";
-            if (isForeignKey) {
-                String[] data = htblForeignKeys.get(colName).split(".");
-                foreignTable = data[0];
-                foreignColumn = data[1];
-            }
-
-            // Check if this is a computed column
-            boolean isComputed = false;
-            for (String curr : computedCols) {
-                if (curr.equals(colName)) {
-                    isComputed = true;
-                    break;
+                String attMax = htblColNameMax.get(colName);
+                String attMin = htblColNameMin.get(colName);
+                
+                // Check if current column is cluster key
+                boolean isClusterKey = strClusteringKeyColumn.equals(colName);
+                
+                // Initialize indexed to null
+                String indexName = "null";
+                String indexType = "null";
+                
+                // Check if foreign key and calculate values
+                boolean isForeignKey = htblForeignKeys.containsKey(colName);
+                String foreignTable = "null";
+                String foreignColumn = "null";
+                if (isForeignKey) {
+                    String[] data = htblForeignKeys.get(colName).split(".");
+                    foreignTable = data[0];
+                    foreignColumn = data[1];
                 }
+
+                // Check if this is a computed column
+                boolean isComputed = false;
+                for (String curr : computedCols) {
+                    if (curr.equals(colName)) {
+                        isComputed = true;
+                        break;
+                    }
+                }
+                
+                // TableName, ColumnName, ColumnType, ClusteringKey, IndexName, IndexType, min, max, ForeignKey, ForeignTableName, ForeignColumnName, Compute
+                String row = strTableName + "," + colName + "," + attType + "," + isClusterKey + "," + indexName + "," + indexType + "," + attMin + "," + attMax + "," + isForeignKey + "," + foreignTable + "," + foreignColumn + "," + isComputed;
+                
+                // Append this column to the metadata
+                meta.append(row + "\n");
             }
-            
-            // TableName, ColumnName, ColumnType, ClusteringKey, IndexName, IndexType, min, max, ForeignKey, ForeignTableName, ForeignColumnName, Compute
-            String row = strTableName + "," + colName + "," + attType + "," + isClusterKey + "," + indexName + "," + indexType + "," + attMin + "," + attMax + "," + isForeignKey + "," + foreignTable + "," + foreignColumn + "," + isComputed;
-            
-            // Append this column to the metadata
-            meta.append(row + "\n");
-        }
         
-        // Close metadata file
-        meta.flush();
-        meta.close();
-    } catch (IOException e) {
-        throw new DBAppException(e.getMessage());
+            // Close metadata file
+            meta.flush();
+            meta.close();
+        } catch (IOException e) {
+            throw new DBAppException(e.getMessage());
+        }
     }
-}
 
     /**
      * Following method creates a grid index

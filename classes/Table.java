@@ -64,6 +64,29 @@ public class Table {
             e.printStackTrace();  
         }  
     }
+
+    /**
+     * Following method could be used to delete one or more rows.
+     * @param htblColNameValue holds the key and value. This will be used in search to identify which rows/tuples to delete. Enteries are ANDED together
+     * @throws DBAppException
+     */
+    public void deleteFromTable(Hashtable<String,Object> htblColNameValue) throws DBAppException {
+        // Ensure delete constraint is of same data type
+        Enumeration<String> keys = htblColNameValue.keys();
+        
+        // Iterate over the given columns
+        while (keys.hasMoreElements()) {
+            String colName = keys.nextElement();
+            String colType = this.htblColNameType.get(colName);
+
+            // Check same type
+        }
+        
+        // TODO: Check if at least column with index
+
+        // Else linearly do it :)
+        
+    }
     
     public String[] getColNames() {
         Object[] arrObj = htblColNameType.keySet().toArray();

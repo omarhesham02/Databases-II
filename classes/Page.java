@@ -41,7 +41,7 @@ public class Page {
     public void insertIntoPage(Hashtable<String, Object> tuple) throws FileNotFoundException {
         PrintWriter pw = new PrintWriter(this.intPageNum + ".csv");
 
-        StringBuffer csvData = new StringBuffer();
+        StringBuilder csvData = new StringBuilder();
 
         // Get all attributes of the table containing this page
         ArrayList<String> strAttributes = new ArrayList<>();
@@ -87,5 +87,9 @@ public class Page {
                     csvData.append(",");
                 }
             }
+                // Write the tuple to the CSV file
+                pw.write(csvData.toString());
+                pw.close();
+
     }
 }

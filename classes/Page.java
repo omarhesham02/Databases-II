@@ -1,7 +1,10 @@
 package classes;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.FileSystemException;
 import java.util.ArrayList;
@@ -22,19 +25,20 @@ public class Page {
      * listed in the config file
      */
 
-    public static boolean isFull() {
+    public boolean isFull() {
         // if this.intCountTuples == config.maxTuples 
+        return false;
     }
 
 
-    public Page(String strTableName, int intPageNum) throws FileSystemException{
+    public Page(String strTableName, int intPageNum) throws FileSystemException, FileNotFoundException{
         this.intPageNum = intPageNum;
         File PAGE_PATH = new File("./tables/" + strTableName + "/" + intPageNum);
         PrintWriter pw = new PrintWriter(PAGE_PATH);
 
     }
 
-    public void insertIntoPage(Hashtable<String, Object> tuple) {
+    public void insertIntoPage(Hashtable<String, Object> tuple) throws FileNotFoundException {
         PrintWriter pw = new PrintWriter(this.intPageNum + ".csv");
 
         StringBuffer csvData = new StringBuffer();
@@ -75,19 +79,13 @@ public class Page {
 
                 // Check if the tuple to be inserted has this attribute and a value for it
                 if (tuple.containsKey(nextAttribute)) {
-                    csvData.write(tuple.get(nextAttribute));
-                    csvData.write(",");
+                    csvData.append(tuple.get(nextAttribute));
+                    csvData.append(",");
                 } else {
                     // Otherwise write an empty string
-                    csvData.write("");
-                    csvData.write(",");
+                    csvData.append("");
+                    csvData.append(",");
                 }
             }
     }
-    
-    public static void main(String[] args) {
-        Page p = new Page(0);
-        
-    }
-
 }

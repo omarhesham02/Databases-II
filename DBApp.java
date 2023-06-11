@@ -51,6 +51,20 @@ public class DBApp  {
         } catch (DBAppException e) {
             e.printStackTrace();
         }
+
+        // Test insert into table
+        try {
+            Hashtable<String,Object> htblColNameValue = new Hashtable<String, Object>();
+
+            htblColNameValue.put("ProductID", 10);
+            htblColNameValue.put("ProductName", "Test Product");
+            htblColNameValue.put("ProductPrice", 1000);
+
+            dbApp.insertIntoTable("Product", htblColNameValue);
+
+        } catch (Exception e) {
+            // TODO: handle exception
+        }
     }
     
     /**

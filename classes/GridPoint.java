@@ -7,7 +7,7 @@ public class GridPoint {
     // The page is the page containing the record falling in this grid area based on the indexing keys, and the occurunces (i.e number) of records in this page
 
     TreeMap<Page, Integer> Point;
-    ArrayList<Point> points;
+    // ArrayList<Point> points;
 }
 
 

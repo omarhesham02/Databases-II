@@ -84,7 +84,8 @@ public class Page {
                 }
             }
                 // Write the tuple to the CSV file
-                pw.close(csvData.toString());
+                pw.write(csvData.toString());
+                pw.close();
 
     }
     

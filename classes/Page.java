@@ -27,7 +27,7 @@ public class Page {
     }
 
 
-    public Page(String strTableName, String intPageNum) throws FileSystemException{
+    public Page(String strTableName, int intPageNum) throws FileSystemException{
         this.intPageNum = intPageNum;
         File PAGE_PATH = new File("./tables/" + strTableName + "/" + intPageNum);
         PrintWriter pw = new PrintWriter(PAGE_PATH);

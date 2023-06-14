@@ -1,4 +1,4 @@
-package classes;
+package src.classes;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -7,9 +7,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.FileSystemException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -21,6 +18,7 @@ public class Page {
     private int intPageNum;
     private int intCountTuples;
     private boolean isModified;
+    private File PAGE_PATH;
 
     /**
      * Returns whether the page is full or not by comparing the
@@ -34,21 +32,13 @@ public class Page {
     }
 
 
-    public Page (String strTableName, int intPageNum) throws FileSystemException, IOException, FileNotFoundException{
+    public Page(String strTableName, int intPageNum) throws FileSystemException, FileNotFoundException{
         this.intPageNum = intPageNum;
-        Path  PAGE_PATH = Paths.get("./tables/" + strTableName + "/" + intPageNum + ".csv");
-        if (!Files.exists(PAGE_PATH)) {
-            Files.createFile(PAGE_PATH);
-            System.out.println(PAGE_PATH);
-        } else {
-            System.out.println("File already exists");
-        }
-        // PrintWriter pw = new PrintWriter(PAGE_PATH);
-
+        this.strTableName = strTableName;
+        this.PAGE_PATH = new File("./src/tables/" + strTableName + "/" + (intPageNum + 1) + ".csv");
     }
 
     public void insertIntoPage(Hashtable<String, Object> tuple) throws FileNotFoundException {
-        String PAGE_PATH = "./tables/" + strTableName + "/" + intPageNum + ".csv";
         PrintWriter pw = new PrintWriter(PAGE_PATH);
 
         StringBuilder csvData = new StringBuilder();
@@ -60,7 +50,7 @@ public class Page {
         String splitBy = ",";  
         try {
             // Iterate over rows in metadata
-            BufferedReader br = new BufferedReader(new FileReader("metadata.csv"));  
+            BufferedReader br = new BufferedReader(new FileReader("./src/metadata.csv"));  
             
             // Look for this table
             while ((line = br.readLine()) != null) {  
@@ -70,10 +60,10 @@ public class Page {
                 if (!row[0].equals(strTableName)) continue;
                 String colName = row[1];
                 strAttributes.add(colName);
+            }
 
             br.close();
-            
-        }
+                
             } catch (IOException e) {  
                 e.printStackTrace();  
                  }  
@@ -97,6 +87,7 @@ public class Page {
                     csvData.append(",");
                 }
             }
+            System.out.println("Built String " + csvData.toString() + "\nTrying to save.");
                 // Write the tuple to the CSV file
                 pw.write(csvData.toString());
                 pw.close();

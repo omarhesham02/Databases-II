@@ -1,4 +1,4 @@
-package classes;
+package src.classes;
 import java.util.ArrayList;
 import java.util.TreeMap;
 

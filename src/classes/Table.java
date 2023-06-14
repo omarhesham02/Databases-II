@@ -1,14 +1,12 @@
-package classes;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+package src.classes;
+import java.io.*;
+import java.nio.file.FileSystemException;
 import java.util.*;
-import exceptions.DBAppException;
 
+import src.exceptions.DBAppException;
 
 public class Table {
-    private String TableName;
+    private String strTableName;
     private Hashtable<String, String> htblColNameType = new Hashtable<String, String>();
     private String ColNameClusteringKey = null;
     private Hashtable<String, String> htblColNameIndexName = new Hashtable<String, String>();
@@ -22,10 +20,10 @@ public class Table {
     private File TABLE_DIR;
 
     public Table(String strTableName) throws DBAppException {
-        this.TableName = strTableName;
+        this.strTableName = strTableName;
 
         // If table doesn't already exist throw error
-        TABLE_DIR = new File("./tables/" + strTableName);
+        TABLE_DIR = new File("./src/tables/" + strTableName);
         if (!TABLE_DIR.exists()) {
             throw new DBAppException("Cannot Create Table Class.\nTable " + strTableName + " doesn't exist!");
         }
@@ -35,7 +33,7 @@ public class Table {
         String splitBy = ",";  
         try {
             // Iterate over rows in metadata
-            BufferedReader br = new BufferedReader(new FileReader("metadata.csv"));  
+            BufferedReader br = new BufferedReader(new FileReader("./src/metadata.csv"));  
             
             // Look for this table
             while ((line = br.readLine()) != null) {  
@@ -86,12 +84,13 @@ public class Table {
         while (keys.hasMoreElements()) {
             String colName = keys.nextElement();
             String colType = this.htblColNameType.get(colName);
+            Object objValue = htblColNameValue.get(colName);
             
             // Check if foreign key exists in foreign table
             Boolean foreignKey = this.htblColNameForeignKey.get(colName);
             if (foreignKey) {
                 String foreignTable = this.htblColNameForeignTable.get(colName);
-                Object foreignValue = htblColNameValue.get(colName);
+                Object foreignValue = objValue;
 
                 Table tempForeign = new Table(foreignTable);
                 Boolean exists = tempForeign.clusterKeyExists(foreignValue);
@@ -101,29 +100,52 @@ public class Table {
                 }
             }
 
-            // TODO: Check same type
+            // Check same type
+            Functions.checkType(objValue, colType);
 
-            // TODO: Check Min Max
-            // if (htblColNameValue.get(colName))
+            // Check Min Max
+            int cmpValueMax = Functions.cmpObj((String) htblColNameMax.get(colName), objValue, colType);
+            int cmpValueMin = Functions.cmpObj((String) htblColNameMin.get(colName), objValue, colType);
+            if (cmpValueMax < 0 || cmpValueMin > 0) {
+                throw new DBAppException("Cannot insert.\nValue passed was out of bounds for column " + colType);
+            }
         }
 
         // Call insert in page
         
         // TODO: Else linearly do it :)
         final File[] PAGE_FILES = TABLE_DIR.listFiles();
-        for (File curr: PAGE_FILES) {
+        if (PAGE_FILES.length < 1) {
+            // Create first page
+            System.out.println("Creating first page for " + strTableName);
             try {
-                curr.getAbsolutePath().split("/");
-                Page p = new Page(TableName, 0);
-                
-                // If page already full go to next page
-                if (p.isFull()) continue;
-                
+                Page1 p = new Page1(this, 0);
                 p.insertIntoPage(htblColNameValue);
+                p.close();
             } catch (Exception e) {
-                // TODO: handle exception
+                e.getMessage();
             }
-        } 
+
+        } else {
+
+            int i = 0;
+            for (File curr: PAGE_FILES) {
+                try {
+                    // curr.getAbsolutePath().split("/");
+                    Page1 p = new Page1(this, i);
+                
+                    // If page already full go to next page
+                    if (p.isFull()) continue;
+                    
+                    p.insertIntoPage(htblColNameValue);
+                    p.close();
+                    break;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                i++;
+            } 
+        }
     }
 
     /**
@@ -139,8 +161,19 @@ public class Table {
         while (keys.hasMoreElements()) {
             String colName = keys.nextElement();
             String colType = this.htblColNameType.get(colName);
+            Object objValue = htblColNameValue.get(colName);
 
             // Check same type
+            Class<?> c;
+            try {
+                c = Class.forName(colType);
+            } catch (ClassNotFoundException e) {
+                throw new DBAppException("Class " + colType + " does not exist.");
+            }
+
+            if (!c.isInstance(objValue)) {
+                throw new DBAppException("Class type mismatch while inserting " + colName);
+            }
         }
         
         // TODO: Check if at least column with index
@@ -156,13 +189,59 @@ public class Table {
         // TODO: If indexed use index
 
         // Else search linearly
+        final File[] PAGE_FILES = TABLE_DIR.listFiles();
+        int i = 0;
+        for (File curr: PAGE_FILES) {
+            
+            i++;
+        } 
         return true;
 
     }
     
-    public String[] getColNames() {
-        Object[] arrObj = htblColNameType.keySet().toArray();
+    // public String[] getColNames() {
+    //     Object[] arrObj = htblColNameType.keySet().toArray();
 
-        return Arrays.asList(arrObj).toArray(new String[arrObj.length]);
+    //     return Arrays.asList(arrObj).toArray(new String[arrObj.length]);
+    // }
+
+    public ArrayList<String> getColNames() {
+        ArrayList<String> arrList = new ArrayList<String>();
+
+        // Get table data from meta data
+        String line = "";  
+        String splitBy = ",";  
+        try {
+            // Iterate over rows in metadata
+            BufferedReader br = new BufferedReader(new FileReader("./src/metadata.csv"));  
+            
+            // Look for this table
+            while ((line = br.readLine()) != null) {  
+                String[] row = line.split(splitBy);
+
+                // If not table, continue
+                if (!row[0].equals(this.strTableName)) continue;
+            
+                arrList.add(row[1]);
+            }
+
+            br.close();
+        } catch(Exception e) {
+            System.err.println("Error Getting Column names.");
+        }
+
+        return arrList;
+    }
+
+    public String getName() {
+        return this.strTableName;
+    }
+
+    public String getClusteringKey() {
+        return this.ColNameClusteringKey;
+    }
+
+    public String getColType(String colName) {
+        return htblColNameType.get(colName);
     }
 }

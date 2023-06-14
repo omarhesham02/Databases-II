@@ -35,7 +35,7 @@ public class Functions {
                 return d1.compareTo(d2);
             }
             case "java.lang.Date": {
-                // TODO:
+                // TODO: Create formatter
                 Date d1 = Date.from(null);
                 Date d2 = (Date) o2;
 

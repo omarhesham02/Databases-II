@@ -1,70 +1,16 @@
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
+package src;
+import java.io.*;
 import java.util.*;
-import exceptions.DBAppException;
-import classes.*;
+import src.classes.*;
+import src.exceptions.DBAppException;
 
 public class DBApp  {
     public static final int N = 200;
 
     public static void main(String[] args) {
-        DBApp dbApp = new DBApp();
-        
-        // Create table
-        // try {
-        //     Hashtable<String, String> htblColNameType = new Hashtable<String, String>();
-        //     htblColNameType.put("ProductID", "java.lang.Integer");
-        //     htblColNameType.put("ProductName", "java.lang.String");
-        //     htblColNameType.put("ProductPrice", "java.lang.Double");
-            
-        //     Hashtable<String, String> htblColNameMin = new Hashtable<String, String>();
-        //     htblColNameMin.put("ProductID", "0");
-        //     htblColNameMin.put("ProductName", "A");
-        //     htblColNameMin.put("ProductPrice", "0");
-            
-        //     Hashtable<String, String> htblColNameMax = new Hashtable<String, String>();
-        //     htblColNameMax.put("ProductID", "1000");
-        //     htblColNameMax.put("ProductName", "ZZZZZZZZZZZ");
-        //     htblColNameMax.put("ProductPrice", "100000");
-            
-        //     Hashtable<String, String> htblForeignKeys = new Hashtable<String, String>();
-            
-        //     String[] computedCols = {};
-            
-        //     dbApp.createTable("Product", " ProductID ", htblColNameType, htblColNameMin, htblColNameMax, htblForeignKeys, computedCols);
-        // } catch (DBAppException e) {
-        //     System.err.println("Can't Create Table.");
-        //     e.printStackTrace();
-        // }
+        Tests test = new Tests();
 
-        // Test Table class
-        try {
-            Table tbl = new Table("Product");
-            String [] colNames = tbl.getColNames();
-
-            for (String colName : colNames) {
-                System.out.println(colName);
-            }
-        } catch (DBAppException e) {
-            e.printStackTrace();
-        }
-
-        // Test insert into table
-        try {
-            Hashtable<String,Object> htblColNameValue = new Hashtable<String, Object>();
-
-            htblColNameValue.put("ProductID", 10);
-            htblColNameValue.put("ProductName", "Test Product");
-            htblColNameValue.put("ProductPrice", 1000);
-
-            dbApp.insertIntoTable("Product", htblColNameValue);
-
-        } catch (Exception e) {
-            // TODO: handle exception
-        }
+        test.insertTable();
     }
     
     /**
@@ -80,7 +26,7 @@ public class DBApp  {
      */
     public void createTable(String strTableName, String strClusteringKeyColumn, Hashtable<String,String> htblColNameType, Hashtable<String,String> htblColNameMin, Hashtable<String,String> htblColNameMax, Hashtable<String,String> htblForeignKeys, String[] computedCols ) throws DBAppException {
         // Create table folder
-        final File TABLE_DIR = new File("./tables/" + strTableName);
+        final File TABLE_DIR = new File("./src/tables/" + strTableName);
         
         // If table already exist throw error, else create folder
         if (TABLE_DIR.exists()) {
@@ -91,7 +37,7 @@ public class DBApp  {
         // Open metadata file
         FileWriter meta;
         try {
-            meta = new FileWriter("metadata.csv", true);
+            meta = new FileWriter("./src/metadata.csv", true);
             
             // Enumerating the elements of the hashtable
             Enumeration<String> keys = htblColNameType.keys();
@@ -160,7 +106,7 @@ public class DBApp  {
         }
 
         // Set path to the table's directory
-        final File TABLE_DIR = new File("./tables/" + strTableName);
+        final File TABLE_DIR = new File("./src/tables/" + strTableName);
         
         // TODO: Implement grid index on given 2 columns
         
@@ -174,7 +120,10 @@ public class DBApp  {
      */
     public void insertIntoTable(String strTableName, Hashtable<String,Object> htblColNameValue) throws DBAppException {
         // TODO: Ensure primary key has a value
+        Table tbl = new Table(strTableName);
 
+        System.out.println("Inserting into table " + strTableName);
+        tbl.insertIntoTable(htblColNameValue);
     }
     
     /**
@@ -210,5 +159,4 @@ public class DBApp  {
         
         return results.iterator();
     }
-
 }

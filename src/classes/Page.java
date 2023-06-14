@@ -1,4 +1,4 @@
-package classes;
+package src.classes;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -18,6 +18,7 @@ public class Page {
     private int intPageNum;
     private int intCountTuples;
     private boolean isModified;
+    private File PAGE_PATH;
 
     /**
      * Returns whether the page is full or not by comparing the
@@ -33,13 +34,12 @@ public class Page {
 
     public Page(String strTableName, int intPageNum) throws FileSystemException, FileNotFoundException{
         this.intPageNum = intPageNum;
-        File PAGE_PATH = new File("./tables/" + strTableName + "/" + intPageNum);
-        PrintWriter pw = new PrintWriter(PAGE_PATH);
-
+        this.strTableName = strTableName;
+        this.PAGE_PATH = new File("./src/tables/" + strTableName + "/" + (intPageNum + 1) + ".csv");
     }
 
     public void insertIntoPage(Hashtable<String, Object> tuple) throws FileNotFoundException {
-        PrintWriter pw = new PrintWriter(this.intPageNum + ".csv");
+        PrintWriter pw = new PrintWriter(PAGE_PATH);
 
         StringBuilder csvData = new StringBuilder();
 
@@ -50,7 +50,7 @@ public class Page {
         String splitBy = ",";  
         try {
             // Iterate over rows in metadata
-            BufferedReader br = new BufferedReader(new FileReader("metadata.csv"));  
+            BufferedReader br = new BufferedReader(new FileReader("./src/metadata.csv"));  
             
             // Look for this table
             while ((line = br.readLine()) != null) {  
@@ -60,10 +60,10 @@ public class Page {
                 if (!row[0].equals(strTableName)) continue;
                 String colName = row[1];
                 strAttributes.add(colName);
+            }
 
             br.close();
-            
-        }
+                
             } catch (IOException e) {  
                 e.printStackTrace();  
                  }  
@@ -87,6 +87,7 @@ public class Page {
                     csvData.append(",");
                 }
             }
+            System.out.println("Built String " + csvData.toString() + "\nTrying to save.");
                 // Write the tuple to the CSV file
                 pw.write(csvData.toString());
                 pw.close();

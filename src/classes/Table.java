@@ -188,7 +188,7 @@ public class Table {
      * @throws DBAppException
      */
 
-    public void deleteFromTable(Hashtable<String,Object> htblColNameValue) throws DBAppException {
+    public void deleteFromTable(String strTableName, Hashtable<String,Object> htblColNameValue) throws DBAppException {
         // Ensure delete constraint is of same data type
         Enumeration<String> keys = htblColNameValue.keys();
         
@@ -198,25 +198,22 @@ public class Table {
             String colType = this.htblColNameType.get(colName);
             Object objValue = htblColNameValue.get(colName);
 
-            // Check same type
-            Class<?> c;
-            try {
-                c = Class.forName(colType);
-            } catch (ClassNotFoundException e) {
-                throw new DBAppException("Class " + colType + " does not exist.");
-            }
-
-            if (!c.isInstance(objValue)) {
-                throw new DBAppException("Class type mismatch while inserting " + colName);
-            }
+            Functions.checkType(objValue, colType);
         }
         
         // TODO: Check if at least column with index
 
         // TODO: Else linearly do it :)
         final File[] PAGE_FILES = TABLE_DIR.listFiles();
+        int i = 0;
         for (File curr: PAGE_FILES) {
-            
+            try {
+                    Page p = new Page(this, i++);
+                    p.deleteFromPage(htblColNameValue);
+                    p.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
         }   
     }
     // TODO!!!!

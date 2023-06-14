@@ -9,8 +9,8 @@ public class DBApp  {
 
     public static void main(String[] args) {
         Tests test = new Tests();
-
-        test.insertTable();
+        // test.insertTable();
+        test.updateTable();
     }
     
     /**
@@ -120,6 +120,7 @@ public class DBApp  {
      */
     public void insertIntoTable(String strTableName, Hashtable<String,Object> htblColNameValue) throws DBAppException {
         // TODO: Ensure primary key has a value
+        // TODO: 
         Table tbl = new Table(strTableName);
 
         System.out.println("Inserting into table " + strTableName);
@@ -134,8 +135,11 @@ public class DBApp  {
      * @throws DBAppException
      */
     public void updateTable(String strTableName, String strClusteringKeyValue, Hashtable<String,Object> htblColNameValue ) throws DBAppException {
+            Table tb = new Table(strTableName);
+            tb.updateTable(strTableName, strClusteringKeyValue, htblColNameValue);
 
-    }
+            } 
+
 
     /**
      * Following method could be used to delete one or more rows.

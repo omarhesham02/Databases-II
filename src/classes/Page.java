@@ -1,96 +1,202 @@
 package src.classes;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.nio.file.FileSystemException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.Hashtable;
+import java.io.*;
+import java.util.*;
+import src.DBApp;
+import src.exceptions.DBAppException;
 
 public class Page {
+    final static int N = DBApp.N;
 
-    private String strTableName;
     private int intPageNum;
-    private int intCountTuples;
-    private boolean isModified;
-    private File PAGE_PATH;
+    private Boolean isUpdated = false;
+    private String clusterMin;
+    private String clusterMax;
+    private Table parentTable;
+    private ArrayList<Hashtable<String, String>> arrTuples = new ArrayList<Hashtable<String, String>>();
+    private File PAGE_PATH; 
+
+    public Page(Table tbl, int intPageNum) {
+        this.parentTable = tbl;
+        this.intPageNum = intPageNum;
+        this.PAGE_PATH = new File("./src/tables/" + parentTable.getName() + "/" + intPageNum + ".csv");
+        load();
+        System.out.println("Page min: " + clusterMin + "\nPage max: " + clusterMax);
+    }
+
+    public ArrayList<Hashtable<String, String>> getArrTuples() {
+        return this.arrTuples;
+    }
 
     /**
-     * Returns whether the page is full or not by comparing the
-     * number of tuples currently present in the page with the maximum per page
-     * listed in the config file
+     * Load existing tuples into this page
      */
+    public void load() {
+        if (!this.PAGE_PATH.exists()) return;
+
+        try {
+            String line = "";
+            BufferedReader pageFile = new BufferedReader(new FileReader(PAGE_PATH));
+            
+            while ((line = pageFile.readLine()) != null) {
+                Hashtable<String, String> tuple = breakTuple(line);
+                arrTuples.add(tuple);
+            }
+
+            clusterMin = arrTuples.get(0).get(parentTable.getClusteringKey());
+            clusterMax = arrTuples.get(arrTuples.size() - 1).get(parentTable.getClusteringKey());
+
+            pageFile.close();
+        } catch (Exception e) {
+            System.err.println("Failed to load page " + intPageNum + " for table " + parentTable.getName());
+        }
+    }
 
     public boolean isFull() {
-        // if this.intCountTuples == config.maxTuples 
-        return false;
+        return arrTuples.size() == N;
     }
 
+    /**
+     * Following method inserts one row only.
+     * @param htblColNameValue must include a value for the primary key.
+     * @throws DBAppException
+     */
+    public void insertIntoPage(Hashtable<String,Object> htblColNameValue) throws DBAppException {
+        // Ensure page has space
+        if (this.isFull()) return;
 
-    public Page(String strTableName, int intPageNum) throws FileSystemException, FileNotFoundException{
-        this.intPageNum = intPageNum;
-        this.strTableName = strTableName;
-        this.PAGE_PATH = new File("./src/tables/" + strTableName + "/" + (intPageNum + 1) + ".csv");
-    }
+        // Insert into place based on clustering key
+        int arrSize = arrTuples.size();
+        if (arrSize < 1) {
+            arrTuples.add(stringify(htblColNameValue));
+            isUpdated = true;
+            return;
+        }
 
-    public void insertIntoPage(Hashtable<String, Object> tuple) throws FileNotFoundException {
-        PrintWriter pw = new PrintWriter(PAGE_PATH);
 
-        StringBuilder csvData = new StringBuilder();
+        String colNameClusteringKey = parentTable.getClusteringKey();
+        for (int i = 0; i < arrSize; i++) {
+            String curr = arrTuples.get(i).get(colNameClusteringKey);
+            Object insert = htblColNameValue.get(colNameClusteringKey);
 
-        // Get all attributes of the table containing this page
-        ArrayList<String> strAttributes = new ArrayList<>();
-        
-         String line = "";  
-        String splitBy = ",";  
-        try {
-            // Iterate over rows in metadata
-            BufferedReader br = new BufferedReader(new FileReader("./src/metadata.csv"));  
-            
-            // Look for this table
-            while ((line = br.readLine()) != null) {  
-                String[] row = line.split(splitBy);
+            int compare = Functions.cmpObj(curr, insert, parentTable.getColType(colNameClusteringKey));
 
-                // If not table, continue
-                if (!row[0].equals(strTableName)) continue;
-                String colName = row[1];
-                strAttributes.add(colName);
-            }
+            // Insert here
+            if (compare == 1) {
+                Hashtable<String, String> tempTuple = stringify(htblColNameValue);
 
-            br.close();
-                
-            } catch (IOException e) {  
-                e.printStackTrace();  
-                 }  
-        
-            Enumeration<String> strColumnNames = tuple.keys();
-
-            // Iterate over all the attributes of the table. If the attribute has a value to be inserted in the given tuple to insert, write it
-            // otherwise, write an empty string 
-            
-            Enumeration<String> attributeEnumeration = Collections.enumeration(strAttributes);
-            while (attributeEnumeration.hasMoreElements()) {
-                String nextAttribute = attributeEnumeration.nextElement();
-
-                // Check if the tuple to be inserted has this attribute and a value for it
-                if (tuple.containsKey(nextAttribute)) {
-                    csvData.append(tuple.get(nextAttribute));
-                    csvData.append(",");
-                } else {
-                    // Otherwise write an empty string
-                    csvData.append("");
-                    csvData.append(",");
+                for (int j = i; j < arrSize; j++) {
+                    Hashtable<String, String> next = arrTuples.get(j);
+                    arrTuples.set(j, tempTuple);
+                    tempTuple = next;
                 }
+                arrTuples.add(tempTuple);
+                isUpdated = true;
+                return;
             }
-            System.out.println("Built String " + csvData.toString() + "\nTrying to save.");
-                // Write the tuple to the CSV file
-                pw.write(csvData.toString());
-                pw.close();
+        }
 
+        // If reached end of file and not entered, then it must be the greatest
+        if (!isUpdated) {
+            arrTuples.add(stringify(htblColNameValue));
+            isUpdated = true;
+            return;
+        }
+        // TODO: Update grid index
+    }
+
+    public void updatePage (String strClusteringKey, String strClusteringKeyValue, Hashtable<String,Object> htblColNameValue) throws DBAppException {  
+
+                    ArrayList<Hashtable<String, String>> arrTuples = this.getArrTuples();
+
+                    // Iterate over the tuples of the page looking for a tuple with the clustering key value 
+                    try {
+                    Enumeration<String> colName = htblColNameValue.keys();
+                    for (Hashtable<String, String> tuple : arrTuples) {
+                        if (tuple.get(strClusteringKey).equals(strClusteringKeyValue)) {
+                            while (colName.hasMoreElements()) {
+                                String nextCol = colName.nextElement();
+                                String colType = parentTable.getColType(nextCol);
+                                Functions.checkType(htblColNameValue.get(nextCol), colType);                                        
+                                
+                                String oldTupleValue = (String) tuple.get(nextCol);
+                                Object newTupleValue = htblColNameValue.get(nextCol);
+
+                                System.out.println(oldTupleValue + " , " + newTupleValue);
+                                if (Functions.cmpObj(oldTupleValue, newTupleValue, colType) != 0) {
+                                tuple.put(nextCol, "" + newTupleValue); 
+                                this.isUpdated = true;
+                                break;
+
+                                }
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+    }
+
+    public void close() throws DBAppException {
+        if (!isUpdated) return;
+        FileWriter fw;
+        BufferedWriter bw;
+        try {
+            fw = new FileWriter(PAGE_PATH, false);
+            bw = new BufferedWriter(fw);
+            for (Hashtable<String, String> htbl: arrTuples) {
+                bw.write(buildTuple(htbl));
+                bw.newLine();
+            }
+            
+            bw.close();
+            // fw.flush();
+            // fw.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new DBAppException("Error saving page " + intPageNum);
+        }
+    }
+
+    private String buildTuple(Hashtable<String, String> htblColNameValue) {
+        ArrayList<String> OrderedColumns = parentTable.getColNames();
+        String[] temp = new String[OrderedColumns.size()];
+
+        int i = 0;
+        for (String s: OrderedColumns) {
+            if (htblColNameValue.get(s) != null) {
+            temp[i++] = htblColNameValue.get(s);
+            } else {
+                temp[i++] = "";
+            }
+        }
+
+        return String.join(",", temp);
+    }
+
+    private Hashtable<String, String> breakTuple(String line) {
+        Hashtable<String, String> tuple = new Hashtable<String, String>();
+        ArrayList<String> OrderedColumns = parentTable.getColNames();
+        String[] temp = line.split(",");
+
+        int i = 0;
+        for (String s: OrderedColumns) {
+            tuple.put(s, temp[i++]);
+        }
+
+        return tuple;
+    }
+
+    private Hashtable<String, String> stringify(Hashtable<String, Object> tempTuple) {
+        Hashtable<String, String> result = new Hashtable<String, String>();
+
+        // Iterate over the given columns
+        Enumeration<String> keys = tempTuple.keys();
+        while (keys.hasMoreElements()) {
+            String colName = keys.nextElement();
+            result.put(colName, "" + tempTuple.get(colName));
+        }
+
+        return result;
     }
 }

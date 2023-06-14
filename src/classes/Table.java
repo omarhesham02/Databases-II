@@ -101,7 +101,12 @@ public class Table {
             }
 
             // Check same type
+            if (objValue == null) 
+                continue;
+
+
             Functions.checkType(objValue, colType);
+            
 
             // Check Min Max
             int cmpValueMax = Functions.cmpObj((String) htblColNameMax.get(colName), objValue, colType);
@@ -119,7 +124,7 @@ public class Table {
             // Create first page
             System.out.println("Creating first page for " + strTableName);
             try {
-                Page1 p = new Page1(this, 0);
+                Page p = new Page(this, 0);
                 p.insertIntoPage(htblColNameValue);
                 p.close();
             } catch (Exception e) {
@@ -132,7 +137,7 @@ public class Table {
             for (File curr: PAGE_FILES) {
                 try {
                     // curr.getAbsolutePath().split("/");
-                    Page1 p = new Page1(this, i);
+                    Page p = new Page(this, i);
                 
                     // If page already full go to next page
                     if (p.isFull()) continue;
@@ -148,11 +153,41 @@ public class Table {
         }
     }
 
+ /**
+     * Following method updates one row only
+     * @param strTableName
+     * @param strClusteringKeyValue is the value to look for to find the row to update.
+     * @param htblColNameValue holds the key and new value, and will not include clustering key as column name
+     * @throws DBAppException
+     */
+    public void updateTable(String strTableName, String strClusteringKeyValue, Hashtable<String,Object> htblColNameValue) throws DBAppException {
+            // TODO: Use index to find the row to update if strClusteringKeyValue has an index
+
+            Table tb = new Table(strTableName);
+            
+            String strClusteringKey = tb.getClusteringKey();
+
+            // Scan all page files linearly to update all matching records
+            final File[] PAGE_FILES = TABLE_DIR.listFiles();
+
+            int i = 0;
+            for (File curr: PAGE_FILES) {
+                try {
+                    Page p = new Page(this, i++);
+                    p.updatePage(strClusteringKey, strClusteringKeyValue, htblColNameValue);
+                    p.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        } 
+
     /**
      * Following method could be used to delete one or more rows.
      * @param htblColNameValue holds the key and value. This will be used in search to identify which rows/tuples to delete. Enteries are ANDED together
      * @throws DBAppException
      */
+
     public void deleteFromTable(Hashtable<String,Object> htblColNameValue) throws DBAppException {
         // Ensure delete constraint is of same data type
         Enumeration<String> keys = htblColNameValue.keys();

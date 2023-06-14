@@ -59,12 +59,37 @@ public class Tests {
         // Test insert into table
         try {
             Hashtable<String,Object> htblColNameValue = new Hashtable<String, Object>();
+            Hashtable<String,Object> htblColNameValue2 = new Hashtable<String, Object>();
 
             htblColNameValue.put("ProductID", 200);
             htblColNameValue.put("ProductName", "Test Product");
             htblColNameValue.put("ProductPrice", 1000.00);
 
+            htblColNameValue2.put("ProductID", 100);
+
+            htblColNameValue2.put("ProductName", "Test Product");
+
+
             dbApp.insertIntoTable("Product", htblColNameValue);
+            // dbApp.insertIntoTable("Product", htblColNameValue2);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void updateTable() {
+         try {
+            Hashtable<String,Object> htblColNameValue = new Hashtable<String, Object>();
+            Hashtable<String,Object> htblColNameValue2 = new Hashtable<String, Object>();
+
+            // htblColNameValue.put("ProductID", 200);
+            htblColNameValue.put("ProductPrice", 12.00);
+            //  htblColNameValue.put("ProductPrice", 1000.00);
+
+
+            dbApp.updateTable("Product", "200", htblColNameValue);
+            // dbApp.insertIntoTable("Product", htblColNameValue2);
 
         } catch (Exception e) {
             e.printStackTrace();

@@ -7,6 +7,9 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.FileSystemException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -31,15 +34,22 @@ public class Page {
     }
 
 
-    public Page(String strTableName, int intPageNum) throws FileSystemException, FileNotFoundException{
+    public Page (String strTableName, int intPageNum) throws FileSystemException, IOException, FileNotFoundException{
         this.intPageNum = intPageNum;
-        File PAGE_PATH = new File("./tables/" + strTableName + "/" + intPageNum);
-        PrintWriter pw = new PrintWriter(PAGE_PATH);
+        Path  PAGE_PATH = Paths.get("./tables/" + strTableName + "/" + intPageNum + ".csv");
+        if (!Files.exists(PAGE_PATH)) {
+            Files.createFile(PAGE_PATH);
+            System.out.println(PAGE_PATH);
+        } else {
+            System.out.println("File already exists");
+        }
+        // PrintWriter pw = new PrintWriter(PAGE_PATH);
 
     }
 
     public void insertIntoPage(Hashtable<String, Object> tuple) throws FileNotFoundException {
-        PrintWriter pw = new PrintWriter(this.intPageNum + ".csv");
+        String PAGE_PATH = "./tables/" + strTableName + "/" + intPageNum + ".csv";
+        PrintWriter pw = new PrintWriter(PAGE_PATH);
 
         StringBuilder csvData = new StringBuilder();
 

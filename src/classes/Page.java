@@ -199,4 +199,16 @@ public class Page {
 
         return result;
     }
+
+    public Hashtable<String, String> getTuple(int tupleIndex) {
+        return arrTuples.get(tupleIndex);
+    }
+
+    public int size() {
+        return arrTuples.size();
+    }
+
+    public int getNum() {
+        return intPageNum;
+    }
 }

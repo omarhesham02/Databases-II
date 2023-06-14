@@ -18,6 +18,7 @@ public class Table {
     private Hashtable<String, String> htblColNameForeignColumnName = new Hashtable<String, String>();
     private Hashtable<String, Boolean> htblColNameComputed = new Hashtable<String, Boolean>();
     private File TABLE_DIR;
+    private int numPages;
 
     public Table(String strTableName) throws DBAppException {
         this.strTableName = strTableName;
@@ -27,6 +28,9 @@ public class Table {
         if (!TABLE_DIR.exists()) {
             throw new DBAppException("Cannot Create Table Class.\nTable " + strTableName + " doesn't exist!");
         }
+
+        final File[] PAGE_FILES = TABLE_DIR.listFiles();
+        this.numPages = PAGE_FILES.length;
 
         // Get table data from meta data
         String line = "";  
@@ -101,12 +105,9 @@ public class Table {
             }
 
             // Check same type
-            if (objValue == null) 
-                continue;
-
+            if (objValue == null) continue;
 
             Functions.checkType(objValue, colType);
-            
 
             // Check Min Max
             int cmpValueMax = Functions.cmpObj((String) htblColNameMax.get(colName), objValue, colType);
@@ -219,6 +220,7 @@ public class Table {
             
         }   
     }
+
     // TODO!!!!
     public boolean clusterKeyExists(Object x) {
         // TODO: If indexed use index
@@ -233,12 +235,6 @@ public class Table {
         return true;
 
     }
-    
-    // public String[] getColNames() {
-    //     Object[] arrObj = htblColNameType.keySet().toArray();
-
-    //     return Arrays.asList(arrObj).toArray(new String[arrObj.length]);
-    // }
 
     public ArrayList<String> getColNames() {
         ArrayList<String> arrList = new ArrayList<String>();
@@ -290,5 +286,9 @@ public class Table {
 
     public String getColMax(String colName) {
         return htblColNameMax.get(colName);
+    }
+
+    public int numPages() {
+        return this.numPages;
     }
 }

@@ -10,7 +10,13 @@ public class DBApp  {
     public static void main(String[] args) {
         Tests test = new Tests();
         // test.insertTable();
-        test.deleteFromTable();
+        // test.deleteFromTable();
+        DBApp app = new DBApp();
+        try {
+            app.createIndex("Product", new String[] {"ProductPrice", "ProductID"});
+        } catch (DBAppException e) {
+            e.printStackTrace();
+        }
     }
     
     /**
@@ -104,12 +110,10 @@ public class DBApp  {
         if (strarrColName.length != 2) {
             throw new DBAppException("Can only create a grid index on two columns");
         }
-
-        // Set path to the table's directory
-        final File TABLE_DIR = new File("./src/tables/" + strTableName);
         
         // TODO: Implement grid index on given 2 columns
-        
+        GridIndex index = new GridIndex(new Table(strTableName), strarrColName[0], strarrColName[1]);
+        System.out.println(index);
     }
 
     /**
@@ -119,8 +123,6 @@ public class DBApp  {
      * @throws DBAppException
      */
     public void insertIntoTable(String strTableName, Hashtable<String,Object> htblColNameValue) throws DBAppException {
-        // TODO: Ensure primary key has a value
-        // TODO: 
         Table tbl = new Table(strTableName);
 
         System.out.println("Inserting into table " + strTableName);

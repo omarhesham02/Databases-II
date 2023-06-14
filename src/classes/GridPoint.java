@@ -1,12 +1,30 @@
 package src.classes;
-import java.util.TreeMap;
 
 public class GridPoint {
-    // Each point is a (page, occurences) pair 
-    // The page is the page containing the record falling in this grid area based on the indexing keys, and the occurunces (i.e number) of records in this page
+    private int page;
+    private int index;
+    public GridPoint next;
 
-    TreeMap<Page, Integer> Point;
-    // ArrayList<Point> points;
+    public GridPoint(int page, int index) {
+        this.page = page;
+        this.index = index;
+    }
+
+    public int getPage() {
+        return this.page;
+    }
+
+    public int getIndex() {
+        return this.index;
+    }
+
+    public String toString() {
+        if (this.next == null) {
+            return this.page + "|" + this.index;
+        }
+
+        return this.page + "|" + this.index + ";" + this.next.toString();
+    }
 }
 
 

@@ -9,12 +9,12 @@ public class TableScanner {
 
     public TableScanner(Table parentTable) {
         this.parentTable = parentTable;
-        this.currPage = new Page(parentTable, currTupleIndex);
+        this.currPage = new Page(parentTable, 0);
     }
 
     public Boolean hasNext() {
         Boolean lastPage = currPage.getNum() >= (parentTable.numPages() - 1);
-        Boolean lastTuple = currTupleIndex >= currPage.size();
+        Boolean lastTuple = currTupleIndex + 1 >= currPage.size();
 
         return !(lastPage && lastTuple);
     }
@@ -23,7 +23,9 @@ public class TableScanner {
      * Gets the next tuple linearly in said table
      * @return
      */
-    public Hashtable<String, String> getNext() {
+    public Hashtable<String, String> next() {
+        if (!hasNext()) return null;
+
         // Increment to next tuple
         currTupleIndex++;
 
@@ -35,5 +37,13 @@ public class TableScanner {
         }
 
         return currPage.getTuple(currTupleIndex);
+    }
+
+    public int getIndex() {
+        return currTupleIndex;
+    }
+
+    public int getPageNum() {
+        return this.currPage.getNum();
     }
 }

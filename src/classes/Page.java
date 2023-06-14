@@ -17,11 +17,11 @@ public class Page {
     private File PAGE_PATH; 
 
     public Page(Table tbl, int intPageNum) {
+        System.out.println("Fetching page " + intPageNum + " from table " + tbl.getName());
         this.parentTable = tbl;
         this.intPageNum = intPageNum;
         this.PAGE_PATH = new File("./src/tables/" + parentTable.getName() + "/" + intPageNum + ".csv");
         load();
-        System.out.println("Page min: " + clusterMin + "\nPage max: " + clusterMax);
     }
 
     public ArrayList<Hashtable<String, String>> getArrTuples() {
@@ -32,6 +32,7 @@ public class Page {
      * Load existing tuples into this page
      */
     public void load() {
+        System.out.println("Loading page...");
         if (!this.PAGE_PATH.exists()) return;
 
         try {

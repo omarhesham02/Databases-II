@@ -1,6 +1,5 @@
 package src.classes;
 import java.io.*;
-import java.nio.file.FileSystemException;
 import java.util.*;
 
 import src.exceptions.DBAppException;
@@ -31,7 +30,20 @@ public class Table {
 
         final File[] PAGE_FILES = TABLE_DIR.listFiles();
         this.numPages = PAGE_FILES.length;
+        loadMetadata();
+    }
 
+    public void loadMetadata() {
+        this.htblColNameType.clear();
+        this.htblColNameIndexName.clear();
+        this.htblColNameIndexType.clear();
+        this.htblColNameMin.clear();
+        this.htblColNameMax.clear();
+        this.htblColNameForeignKey.clear();
+        this.htblColNameForeignTable.clear();
+        this.htblColNameForeignColumnName.clear();
+        this.htblColNameComputed.clear();
+        
         // Get table data from meta data
         String line = "";  
         String splitBy = ",";  
@@ -65,7 +77,7 @@ public class Table {
             
         } catch (IOException e) {  
             e.printStackTrace();  
-        }  
+        }
     }
 
     /**
@@ -288,4 +300,5 @@ public class Table {
     public int numPages() {
         return this.numPages;
     }
+
 }

@@ -61,15 +61,15 @@ public class Functions {
         // Cases for each type
         switch (strObjType) {
             case "java.lang.Integer": {
-                returnBounds = new Integer[numBounds];
+                returnBounds = new Integer[numBounds + 1];
                 int step = (Integer.parseInt(max) - Integer.parseInt(min)) / numBounds;
                 int currBound = Integer.parseInt(min);
 
-                for (int i = 0; i < numBounds - 1; i++) {
+                for (int i = 0; i < numBounds; i++) {
                     returnBounds[i] = currBound;
                     currBound += step;
                 }
-                returnBounds[numBounds - 1] = Integer.parseInt(max);
+                returnBounds[numBounds] = Integer.parseInt(max);
 
                 break;
             }
@@ -78,7 +78,16 @@ public class Functions {
                 break;
             }
             case "java.lang.Double": {
+                returnBounds = new Double[numBounds + 1];
+                Double step = (Double.parseDouble(max) - Double.parseDouble(min)) / numBounds;
+                Double currBound = Double.parseDouble(min);
 
+                for (int i = 0; i < numBounds; i++) {
+                    returnBounds[i] = currBound;
+                    currBound += step;
+                }
+                returnBounds[numBounds] = Double.parseDouble(max);
+                
                 break;
             }
             case "java.lang.Date": {

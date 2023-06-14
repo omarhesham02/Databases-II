@@ -107,8 +107,6 @@ public class Page {
 
     public void updatePage (String strClusteringKey, String strClusteringKeyValue, Hashtable<String,Object> htblColNameValue) throws DBAppException {  
 
-                    ArrayList<Hashtable<String, String>> arrTuples = this.getArrTuples();
-
                     // Iterate over the tuples of the page looking for a tuple with the clustering key value 
                     try {
                     Enumeration<String> colName = htblColNameValue.keys();
@@ -121,8 +119,7 @@ public class Page {
                                 
                                 String oldTupleValue = (String) tuple.get(nextCol);
                                 Object newTupleValue = htblColNameValue.get(nextCol);
-
-                                System.out.println(oldTupleValue + " , " + newTupleValue);
+                                
                                 if (Functions.cmpObj(oldTupleValue, newTupleValue, colType) != 0) {
                                 tuple.put(nextCol, "" + newTupleValue); 
                                 this.isUpdated = true;
@@ -135,6 +132,48 @@ public class Page {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
+    }
+
+    public void deleteFromPage(Hashtable<String,Object> htblColNameValue) {
+        // Iterate over the tuples of the page looking for a tuple with an attribute and its corresponding value that exists in htblColNameValue
+        // If found, delete the tuple
+        try {
+            Enumeration<String> colName = htblColNameValue.keys();
+                 // Check if this tuple has any attribute with a value that exists in htblColNameValue
+                // -> Iterate over htblColNameValue and check if there are any attributes from it contained in the tuple. If so, check if they have the same value
+
+                int countDeleted = 0;
+                
+                for (int i = 0; i < arrTuples.size() - countDeleted; i++) {
+                    Hashtable<String, String> tuple = arrTuples.get(i);
+                    String nextCol = colName.nextElement();
+                    String colType = parentTable.getColType(nextCol);
+                                                       
+                    // Check if the tuple does not have this attribute
+                    if (!tuple.containsKey(nextCol)) 
+                        continue;
+
+                    // If it does, check if the value of the attribute in the tuple is the same as the value in htblColNameValue
+                    // If a value does not match, continue and move on to the next tuple
+                    String tupleValue = tuple.get(nextCol);
+                        if (Functions.cmpObj(tupleValue, htblColNameValue.get(nextCol), colType) != 0)  {
+                            continue;
+                        }
+
+                    // Otherwise, delete the tuple and move on to the next tuple
+                    arrTuples.remove(i);
+                    countDeleted++;
+                    i--;
+                    this.isUpdated = true;
+
+                    // if (Functions.cmpObj(tupleValue, deleteValue, colType) == 0) {
+                        // arrTuples.remove(tuple);
+                        // this.isUpdated = true;
+                        // break;
+                    }
+                } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public void close() throws DBAppException {

@@ -10,7 +10,7 @@ public class DBApp  {
     public static void main(String[] args) {
         Tests test = new Tests();
         // test.insertTable();
-        test.updateTable();
+        test.deleteFromTable();
     }
     
     /**
@@ -136,9 +136,12 @@ public class DBApp  {
      */
     public void updateTable(String strTableName, String strClusteringKeyValue, Hashtable<String,Object> htblColNameValue ) throws DBAppException {
             Table tb = new Table(strTableName);
+            try {
             tb.updateTable(strTableName, strClusteringKeyValue, htblColNameValue);
-
+            } catch (Exception e) {
+                e.printStackTrace();
             } 
+        }
 
 
     /**
@@ -148,7 +151,8 @@ public class DBApp  {
      * @throws DBAppException
      */
     public void deleteFromTable(String strTableName, Hashtable<String,Object> htblColNameValue) throws DBAppException {
-
+        Table tb = new Table(strTableName);
+        tb.deleteFromTable(strTableName, htblColNameValue); 
     }
 
     /**

@@ -61,7 +61,7 @@ public class Tests {
             Hashtable<String,Object> htblColNameValue = new Hashtable<String, Object>();
             Hashtable<String,Object> htblColNameValue2 = new Hashtable<String, Object>();
 
-            htblColNameValue.put("ProductID", 200);
+            htblColNameValue.put("ProductID", 10);
             htblColNameValue.put("ProductName", "Test Product");
             htblColNameValue.put("ProductPrice", 1000.00);
 
@@ -92,6 +92,19 @@ public class Tests {
             // dbApp.insertIntoTable("Product", htblColNameValue2);
 
         } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void deleteFromTable() {
+          Hashtable<String,Object> htblColNameValue = new Hashtable<String, Object>();
+          htblColNameValue.put("ProductID", 10);
+          htblColNameValue.put("ProductName", "Test Product");
+
+          try {
+            dbApp.deleteFromTable("Product", htblColNameValue);
+        } catch (DBAppException e) {
+            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }

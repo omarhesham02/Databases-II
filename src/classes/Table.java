@@ -11,8 +11,8 @@ public class Table {
     private String ColNameClusteringKey = null;
     private Hashtable<String, String> htblColNameIndexName = new Hashtable<String, String>();
     private Hashtable<String, String> htblColNameIndexType = new Hashtable<String, String>();
-    private Hashtable<String, Object> htblColNameMin = new Hashtable<String, Object>();
-    private Hashtable<String, Object> htblColNameMax = new Hashtable<String, Object>();
+    private Hashtable<String, String> htblColNameMin = new Hashtable<String, String>();
+    private Hashtable<String, String> htblColNameMax = new Hashtable<String, String>();
     private Hashtable<String, Boolean> htblColNameForeignKey = new Hashtable<String, Boolean>();
     private Hashtable<String, String> htblColNameForeignTable = new Hashtable<String, String>();
     private Hashtable<String, String> htblColNameForeignColumnName = new Hashtable<String, String>();
@@ -275,5 +275,17 @@ public class Table {
 
     public String getColType(String colName) {
         return htblColNameType.get(colName);
+    }
+
+    public Boolean colExists(String colName) {
+        return (htblColNameType.get(colName) != null);
+    }
+
+    public String getColMin(String colName) {
+        return htblColNameMin.get(colName);
+    }
+
+    public String getColMax(String colName) {
+        return htblColNameMax.get(colName);
     }
 }

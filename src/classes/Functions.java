@@ -47,6 +47,53 @@ public class Functions {
     }
 
     /**
+     * Compares two objects of the same type. 
+     * @param min first object to be compared
+     * @param max second object to be compared
+     * @param numBounds second object to be compared
+     * @param strObjType string name of class
+     * @returns 
+     * @throws DBAppException
+     */
+    public static Object[] getBounds(String min, String max, int numBounds, String strObjType) throws DBAppException {
+        Object[] returnBounds = null;
+
+        // Cases for each type
+        switch (strObjType) {
+            case "java.lang.Integer": {
+                returnBounds = new Integer[numBounds];
+                int step = (Integer.parseInt(max) - Integer.parseInt(min)) / numBounds;
+                int currBound = Integer.parseInt(min);
+
+                for (int i = 0; i < numBounds - 1; i++) {
+                    returnBounds[i] = currBound;
+                    currBound += step;
+                }
+                returnBounds[numBounds - 1] = Integer.parseInt(max);
+
+                break;
+            }
+            case "java.lang.String": {
+
+                break;
+            }
+            case "java.lang.Double": {
+
+                break;
+            }
+            case "java.lang.Date": {
+
+                break;
+            }
+            default: {
+                throw new DBAppException("Invalid column type while preparing grid index bounds!");
+            }
+        }
+        
+        return returnBounds;
+    }
+
+    /**
      * Takes a string representation of a date.
      * Returns true if date is in format "DD.MM.YYYY".
      * @param strDateVal

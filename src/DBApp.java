@@ -11,10 +11,11 @@ public class DBApp  {
 
     public static void main(String[] args) throws DBAppException {
         Tests test = new Tests();
-        test.createTable();
+        // test.createTable();
         test.insertTable();
         // test.deleteFromTable();
-        test.createIndex();
+        // test.createIndex();
+        // test.selectFromTable();
     }
     
     /**
@@ -162,9 +163,64 @@ public class DBApp  {
      * @throws DBAppException
      */
     public Iterator<String> selectFromTable(SQLTerm[] arrSQLTerms, String[] strarrOperators) throws DBAppException {
-        ArrayList<String> results = new ArrayList<String>();
         
-        return results.iterator();
+        SQLTerm firstTerm = arrSQLTerms[0];
+        loadTable(firstTerm.getTableName());
+
+        ArrayList<String> result = new ArrayList<String>();
+        // Iterate over the table
+
+        TableScanner ts = new TableScanner(tblCurrent);
+
+        while (ts.hasNext()) {
+            Hashtable<String, String> currTuple = ts.next();
+        
+            // Iterate over the SQLTerms 
+
+            for (int i = 0; i < arrSQLTerms.length - 1; i++) {
+                SQLTerm currTerm = arrSQLTerms[i];
+                SQLTerm nextTerm = arrSQLTerms[i + 1];
+
+                String currValue = currTerm.getValue();
+                String nextValue = nextTerm.getValue(); 
+                // Check if the current tuple satisfies the current value and the next tuple satisfies the next value
+                boolean currTermSatisfies = currTerm.evaluate(currTuple.get(currTerm.getColumnName()), tblCurrent.getColType(currTerm.getColumnName()));
+                boolean nextTermSatisfies = nextTerm.evaluate(currTuple.get(nextTerm.getColumnName()), tblCurrent.getColType(nextTerm.getColumnName()));
+
+                // Depending on the operator, check if the tuple should be added to the result
+                String operator = strarrOperators[i];
+
+
+                switch (operator) {
+                    case "AND": 
+                        if (currTermSatisfies && nextTermSatisfies) {
+                            // Add the tuple to the result
+                            result.add(ts.buildTuple(currTuple));
+                        }
+                        break;
+                    
+                    case "OR":
+                        if (currTermSatisfies || nextTermSatisfies) {
+                            // Add the tuple to the result
+                            result.add(ts.buildTuple(currTuple));
+                        }
+                        break;
+
+                    default:
+                        throw new DBAppException("Invalid Operator " + operator);
+                }
+
+             }
+        }
+        
+
+
+        for (String s : result) {
+            System.out.println(s);
+        }
+
+        return result.iterator();
+        
     }
 
     private void loadTable(String strTableName) throws DBAppException{

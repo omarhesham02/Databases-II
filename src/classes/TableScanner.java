@@ -1,5 +1,6 @@
 package src.classes;
 
+import java.util.ArrayList;
 import java.util.Hashtable;
 
 public class TableScanner {
@@ -45,5 +46,21 @@ public class TableScanner {
 
     public int getPageNum() {
         return this.currPage.getNum();
+    }
+
+    public String buildTuple(Hashtable<String, String> htblColNameValue) {
+        ArrayList<String> OrderedColumns = parentTable.getColNames();
+        String[] temp = new String[OrderedColumns.size()];
+
+        int i = 0;
+        for (String s: OrderedColumns) {
+            if (htblColNameValue.get(s) != null) {
+            temp[i++] = htblColNameValue.get(s);
+            } else {
+                temp[i++] = "";
+            }
+        }
+
+        return String.join(",", temp);
     }
 }

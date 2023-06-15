@@ -120,6 +120,9 @@ public class GridIndex {
             metaW.flush();
             metaW.close();
             metaR.close();
+
+            this.save();
+            parentTable.loadMetadata();
         } catch (IOException e) {
             throw new DBAppException(e.getMessage());
         }
@@ -129,15 +132,20 @@ public class GridIndex {
     public void save() {
         if (!isUpdated) return;
 
-        // Save x boundary
+        // Create directory if doesn't exist
+        File pathWithoutFile = new File("./src/indices/" + parentTable.getName());
+        if (!pathWithoutFile.exists()) {
+            pathWithoutFile.mkdirs();
+        }
 
-        // Save y boundary
-        
-        // Loop through rows, then columns
-
-        // Separate rows with new line, columns with commas, gridpoints with |
-        
-
+        try {
+            FileWriter fw = new FileWriter(INDEX_PATH, false);
+            fw.write(this.toString());
+            fw.flush();
+            fw.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     // TODO:
@@ -146,20 +154,44 @@ public class GridIndex {
 
     }
 
+    /**
+     * Converts this grid index into a string in the following format:
+     * 
+     * columnx,columny
+     * xBounds (separated by commas)
+     * yBounds (separated by commas)
+     * Grid (grid separated into rows on each line and columns separated by columns)
+     * 
+     * Each column in the grid contains "NULL" or grid point(s) separated by bars |
+     */
     public String toString() {
+        // Column names columnx,columny
         String result = strColNamex + "," + strColNamey + "\n";
 
-
-        for (int i = 0; i < NUM_BOUNDS; i++) {
+        // Column x bounds
+        result += xBounds[0].toString();   
+        for (int i = 1; i < xBounds.length; i++) {
+            result += "," + xBounds[i];
+        }
+        result += "\n";
+        
+        // Column y bounds
+        result += yBounds[0].toString();   
+        for (int i = 1; i < yBounds.length; i++) {
+            result += "," + yBounds[i];
+        }
+        result += "\n";
+        
+        // Grid 
+        for (int y = 0; y < NUM_BOUNDS; y++) {
             String[] row = new String[NUM_BOUNDS];
 
-            for (int j = 0; j < NUM_BOUNDS; j++) {
-                if (gridPoints[j][i] == null) {
-                    row[j] = "NULL";
-                    continue;
-                } 
-
-                row[j] = gridPoints[j][i].toString();
+            for (int x = 0; x < NUM_BOUNDS; x++) {
+                if (gridPoints[x][y] == null) {
+                    row[x] = "NULL";
+                } else {
+                    row[x] = gridPoints[x][y].toString();
+                }
             }
 
             result += String.join(",", row) + "\n";

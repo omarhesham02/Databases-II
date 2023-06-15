@@ -20,6 +20,8 @@ public class Table {
     private int numPages;
 
     public Table(String strTableName) throws DBAppException {
+        System.out.println("Loading table " + strTableName);
+
         this.strTableName = strTableName;
 
         // If table doesn't already exist throw error
@@ -34,6 +36,8 @@ public class Table {
     }
 
     public void loadMetadata() {
+        System.out.println("Loading table " + this.strTableName + "'s properties from metadata...");
+
         this.htblColNameType.clear();
         this.htblColNameIndexName.clear();
         this.htblColNameIndexType.clear();
@@ -201,7 +205,7 @@ public class Table {
      * @throws DBAppException
      */
 
-    public void deleteFromTable(String strTableName, Hashtable<String,Object> htblColNameValue) throws DBAppException {
+    public void deleteFromTable(Hashtable<String,Object> htblColNameValue) throws DBAppException {
         // Ensure delete constraint is of same data type
         Enumeration<String> keys = htblColNameValue.keys();
         

@@ -7,16 +7,14 @@ import src.exceptions.DBAppException;
 public class DBApp  {
     public static final int N = 200;
 
-    public static void main(String[] args) {
+    private Table tblCurrent;
+
+    public static void main(String[] args) throws DBAppException {
         Tests test = new Tests();
-        // test.insertTable();
+        test.createTable();
+        test.insertTable();
         // test.deleteFromTable();
-        DBApp app = new DBApp();
-        try {
-            app.createIndex("Product", new String[] {"ProductPrice", "ProductID"});
-        } catch (DBAppException e) {
-            e.printStackTrace();
-        }
+        test.createIndex();
     }
     
     /**
@@ -110,10 +108,11 @@ public class DBApp  {
         if (strarrColName.length != 2) {
             throw new DBAppException("Can only create a grid index on two columns");
         }
+
+        loadTable(strTableName);
         
         // TODO: Implement grid index on given 2 columns
-        GridIndex index = new GridIndex(new Table(strTableName), strarrColName[0], strarrColName[1]);
-        System.out.println(index);
+        GridIndex index = new GridIndex(tblCurrent, strarrColName[0], strarrColName[1]);
     }
 
     /**
@@ -123,10 +122,10 @@ public class DBApp  {
      * @throws DBAppException
      */
     public void insertIntoTable(String strTableName, Hashtable<String,Object> htblColNameValue) throws DBAppException {
-        Table tbl = new Table(strTableName);
+        loadTable(strTableName);
 
         System.out.println("Inserting into table " + strTableName);
-        tbl.insertIntoTable(htblColNameValue);
+        tblCurrent.insertIntoTable(htblColNameValue);
     }
     
     /**
@@ -137,13 +136,10 @@ public class DBApp  {
      * @throws DBAppException
      */
     public void updateTable(String strTableName, String strClusteringKeyValue, Hashtable<String,Object> htblColNameValue ) throws DBAppException {
-            Table tb = new Table(strTableName);
-            try {
-            tb.updateTable(strTableName, strClusteringKeyValue, htblColNameValue);
-            } catch (Exception e) {
-                e.printStackTrace();
-            } 
-        }
+        loadTable(strTableName);
+
+        tblCurrent.updateTable(strTableName, strClusteringKeyValue, htblColNameValue);
+    }
 
 
     /**
@@ -153,8 +149,9 @@ public class DBApp  {
      * @throws DBAppException
      */
     public void deleteFromTable(String strTableName, Hashtable<String,Object> htblColNameValue) throws DBAppException {
-        Table tb = new Table(strTableName);
-        tb.deleteFromTable(strTableName, htblColNameValue); 
+        loadTable(strTableName);
+
+        tblCurrent.deleteFromTable(htblColNameValue); 
     }
 
     /**
@@ -164,9 +161,17 @@ public class DBApp  {
      * @return
      * @throws DBAppException
      */
-    public Iterator selectFromTable(SQLTerm[] arrSQLTerms, String[] strarrOperators) throws DBAppException {
+    public Iterator<String> selectFromTable(SQLTerm[] arrSQLTerms, String[] strarrOperators) throws DBAppException {
         ArrayList<String> results = new ArrayList<String>();
         
         return results.iterator();
+    }
+
+    private void loadTable(String strTableName) throws DBAppException{
+        if (this.tblCurrent != null && this.tblCurrent.getName().equals(strTableName)) {
+            return;
+        }
+
+        this.tblCurrent = new Table(strTableName);
     }
 }

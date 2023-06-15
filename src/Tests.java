@@ -61,7 +61,7 @@ public class Tests {
 
 
         dbApp.insertIntoTable("Product", htblColNameValue);
-        // dbApp.insertIntoTable("Product", htblColNameValue2);
+        dbApp.insertIntoTable("Product", htblColNameValue2);
     }
 
     public void updateTable() throws DBAppException {

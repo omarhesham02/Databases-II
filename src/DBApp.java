@@ -15,6 +15,7 @@ public class DBApp  {
         test.insertTable();
         // test.deleteFromTable();
         // test.createIndex();
+        // test.selectFromTable();
     }
 
     public DBApp() {}
@@ -164,43 +165,64 @@ public class DBApp  {
      * @throws DBAppException
      */
     public Iterator<String> selectFromTable(SQLTerm[] arrSQLTerms, String[] strarrOperators) throws DBAppException {
-
+        
         SQLTerm firstTerm = arrSQLTerms[0];
         loadTable(firstTerm.getTableName());
 
-        // Iterate over the table tuple by tuple
+        ArrayList<String> result = new ArrayList<String>();
+        // Iterate over the table
+
         TableScanner ts = new TableScanner(tblCurrent);
+
         while (ts.hasNext()) {
             Hashtable<String, String> currTuple = ts.next();
-            
-            // Iterate over the SQLTerms
+        
+            // Iterate over the SQLTerms 
+
             for (int i = 0; i < arrSQLTerms.length - 1; i++) {
-                // Get the current and the next SQLTerm
                 SQLTerm currTerm = arrSQLTerms[i];
                 SQLTerm nextTerm = arrSQLTerms[i + 1];
 
-                // Get the current operator 
-                String currOperator = strarrOperators[i];
+                String currValue = currTerm.getValue();
+                String nextValue = nextTerm.getValue(); 
+                // Check if the current tuple satisfies the current value and the next tuple satisfies the next value
+                boolean currTermSatisfies = currTerm.evaluate(currTuple.get(currTerm.getColumnName()), tblCurrent.getColType(currTerm.getColumnName()));
+                boolean nextTermSatisfies = nextTerm.evaluate(currTuple.get(nextTerm.getColumnName()), tblCurrent.getColType(nextTerm.getColumnName()));
 
-                // Check if currTerm and nextTerm satisfy the condition in their respective terms (>, <, =, etc.)
-                boolean satisfies = currTerm.evaluate()
+                // Depending on the operator, check if the tuple should be added to the result
+                String operator = strarrOperators[i];
 
 
-            }
+                switch (operator) {
+                    case "AND": 
+                        if (currTermSatisfies && nextTermSatisfies) {
+                            // Add the tuple to the result
+                            result.add(ts.buildTuple(currTuple));
+                        }
+                        break;
+                    
+                    case "OR":
+                        if (currTermSatisfies || nextTermSatisfies) {
+                            // Add the tuple to the result
+                            result.add(ts.buildTuple(currTuple));
+                        }
+                        break;
+
+                    default:
+                        throw new DBAppException("Invalid Operator " + operator);
+                }
+
+             }
         }
-        for (int i = 0; i < arrSQLTerms.length; i++) {
-
-
-
-        ArrayList<String> results = new ArrayList<String>();
         
+
+
+        for (String s : result) {
+            System.out.println(s);
         }
-        // Iterate over the table
 
-       
-
-        return results.iterator();
-
+        return result.iterator();
+        
     }
 
     private void loadTable(String strTableName) throws DBAppException{

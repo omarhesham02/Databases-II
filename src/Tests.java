@@ -51,13 +51,13 @@ public class Tests {
         Hashtable<String,Object> htblColNameValue = new Hashtable<String, Object>();
         Hashtable<String,Object> htblColNameValue2 = new Hashtable<String, Object>();
 
-        htblColNameValue.put("ProductID", 10);
-        htblColNameValue.put("ProductName", "Test Product");
-        htblColNameValue.put("ProductPrice", 1000.00);
+        htblColNameValue.put("ProductID", 800);
+        htblColNameValue.put("ProductName", "Lenovo");
+        htblColNameValue.put("ProductPrice", 96000.00);
         
-        htblColNameValue2.put("ProductID", 100);
-        htblColNameValue2.put("ProductPrice", 80000.20);
-        htblColNameValue2.put("ProductName", "Macbook");
+        htblColNameValue2.put("ProductID", 600);
+        htblColNameValue2.put("ProductPrice", 55000.20);
+        htblColNameValue2.put("ProductName", "Acer");
 
 
         // dbApp.insertIntoTable("Product", htblColNameValue);
@@ -84,5 +84,17 @@ public class Tests {
 
     public void createIndex() throws DBAppException {
         dbApp.createIndex("Product", new String[] {"ProductPrice", "ProductID"});
+    }
+
+    public void selectFromTable() throws DBAppException {
+        
+        SQLTerm sqlTerm = new SQLTerm("Product", "ProductID", "<", 50);
+        SQLTerm sqlTerm2 = new SQLTerm("Product", "ProductPrice", ">", 75000.00);
+        
+        SQLTerm[] sqlTerms = new SQLTerm[] {sqlTerm, sqlTerm2};
+        String[] strArrOperators = new String[] {"OR"};
+
+        dbApp.selectFromTable(sqlTerms, strArrOperators);
+        
     }
 }

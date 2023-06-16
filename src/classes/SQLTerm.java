@@ -6,7 +6,6 @@ public class SQLTerm {
     public String strTableName;
     public String strColumnName;
     public String strOperator;
-    public String strColType;
     public Object objValue;
 
     public SQLTerm (String strTableName,String strColumnName,String strOperator,Object objValue) {
@@ -14,22 +13,27 @@ public class SQLTerm {
         this.strColumnName = strColumnName;
         this.strOperator = strOperator;
         this.objValue = objValue;
-        try {
-            this.strColType = new Table(strTableName).getColType(strColumnName);
-        } catch (DBAppException e) {
-            e.printStackTrace();
-        }
     }
+
 
     public SQLTerm() {
 
     }
 
+    
     public String getTableName() {
         return this.strTableName;
     }
 
-    public Boolean evaluate(String strValueToEval) throws DBAppException {
+    public String getColumnName() {
+        return this.strColumnName;
+    }
+
+    public String getValue() {
+        return this.objValue.toString();
+    }
+
+    public Boolean evaluate(String strValueToEval, String strColType) throws DBAppException {
         Functions.checkType(objValue, strColType);
         
         int comparator = Functions.cmpObj(strValueToEval, objValue, strColType);

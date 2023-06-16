@@ -7,7 +7,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.Enumeration;
 import java.util.Hashtable;
 
 import src.exceptions.DBAppException;
@@ -44,7 +43,7 @@ public class GridIndex {
      * Load an existing grid index
      * @param indexFile
      */
-    public GridIndex(Table parentTable, String indexName) {
+    public GridIndex (Table parentTable, String indexName) {
         System.out.println("Reading index " + indexName + " for table " + parentTable.getName());
         
         this.parentTable = parentTable;

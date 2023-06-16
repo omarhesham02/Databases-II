@@ -12,10 +12,10 @@ public class DBApp  {
     public static void main(String[] args) throws DBAppException {
         Tests test = new Tests();
         // test.createTable();
-        test.insertTable();
+        // test.insertTable();
         // test.deleteFromTable();
         // test.createIndex();
-        // test.selectFromTable();
+        test.selectFromTable();
     }
 
     public DBApp() {}
@@ -173,18 +173,18 @@ public class DBApp  {
         // Iterate over the table
 
         TableScanner ts = new TableScanner(tblCurrent);
-
+        int previousOperationResult = -1;
+        
         while (ts.hasNext()) {
             Hashtable<String, String> currTuple = ts.next();
         
             // Iterate over the SQLTerms 
 
+
             for (int i = 0; i < arrSQLTerms.length - 1; i++) {
                 SQLTerm currTerm = arrSQLTerms[i];
                 SQLTerm nextTerm = arrSQLTerms[i + 1];
 
-                String currValue = currTerm.getValue();
-                String nextValue = nextTerm.getValue(); 
                 // Check if the current tuple satisfies the current value and the next tuple satisfies the next value
                 boolean currTermSatisfies = currTerm.evaluate(currTuple.get(currTerm.getColumnName()), tblCurrent.getColType(currTerm.getColumnName()));
                 boolean nextTermSatisfies = nextTerm.evaluate(currTuple.get(nextTerm.getColumnName()), tblCurrent.getColType(nextTerm.getColumnName()));
@@ -193,19 +193,41 @@ public class DBApp  {
                 String operator = strarrOperators[i];
 
 
+
                 switch (operator) {
                     case "AND": 
+                        if (previousOperationResult == -1) {
                         if (currTermSatisfies && nextTermSatisfies) {
                             // Add the tuple to the result
                             result.add(ts.buildTuple(currTuple));
                         }
+                        previousOperationResult = currTermSatisfies && nextTermSatisfies ? 1 : 0;
+                    } else { 
+                        if (previousOperationResult == 1 && currTermSatisfies) {
+                            // Add the tuple to the result
+                            result.add(ts.buildTuple(currTuple));
+                            previousOperationResult = 1;
+                        } else {
+                            previousOperationResult = 0;
+                    }
                         break;
-                    
+                }
                     case "OR":
+                        if (previousOperationResult == -1) {
                         if (currTermSatisfies || nextTermSatisfies) {
                             // Add the tuple to the result
                             result.add(ts.buildTuple(currTuple));
                         }
+                        previousOperationResult = currTermSatisfies || nextTermSatisfies ? 1 : 0;
+                        } else { 
+                        if (previousOperationResult == 1 || currTermSatisfies) {
+                            // Add the tuple to the result
+                            result.add(ts.buildTuple(currTuple));
+                            previousOperationResult = 1;
+                        } else {
+                            previousOperationResult = 0;
+                        }
+                    }
                         break;
 
                     default:

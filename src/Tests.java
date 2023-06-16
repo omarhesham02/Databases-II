@@ -88,11 +88,12 @@ public class Tests {
 
     public void selectFromTable() throws DBAppException {
         
-        SQLTerm sqlTerm = new SQLTerm("Product", "ProductID", "<", 50);
+        SQLTerm sqlTerm = new SQLTerm("Product", "ProductID", "<", 200);
         SQLTerm sqlTerm2 = new SQLTerm("Product", "ProductPrice", ">", 75000.00);
+        SQLTerm sqlTerm3 = new SQLTerm("Product", "ProductName", "=", "Lenovo");
         
-        SQLTerm[] sqlTerms = new SQLTerm[] {sqlTerm, sqlTerm2};
-        String[] strArrOperators = new String[] {"OR"};
+        SQLTerm[] sqlTerms = new SQLTerm[] {sqlTerm, sqlTerm2, sqlTerm3};
+        String[] strArrOperators = new String[] {"AND", "OR"};
 
         dbApp.selectFromTable(sqlTerms, strArrOperators);
         

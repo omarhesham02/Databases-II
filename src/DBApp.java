@@ -11,11 +11,13 @@ public class DBApp  {
 
     public static void main(String[] args) throws DBAppException {
         Tests test = new Tests();
-        test.createTable();
+        // test.createTable();
         test.insertTable();
         // test.deleteFromTable();
-        test.createIndex();
+        // test.createIndex();
     }
+
+    public DBApp() {}
     
     /**
      * Following method creates one table only
@@ -158,13 +160,47 @@ public class DBApp  {
      * 
      * @param arrSQLTerms
      * @param strarrOperators
-     * @return
+     * @return results
      * @throws DBAppException
      */
     public Iterator<String> selectFromTable(SQLTerm[] arrSQLTerms, String[] strarrOperators) throws DBAppException {
+
+        SQLTerm firstTerm = arrSQLTerms[0];
+        loadTable(firstTerm.getTableName());
+
+        // Iterate over the table tuple by tuple
+        TableScanner ts = new TableScanner(tblCurrent);
+        while (ts.hasNext()) {
+            Hashtable<String, String> currTuple = ts.next();
+            
+            // Iterate over the SQLTerms
+            for (int i = 0; i < arrSQLTerms.length - 1; i++) {
+                // Get the current and the next SQLTerm
+                SQLTerm currTerm = arrSQLTerms[i];
+                SQLTerm nextTerm = arrSQLTerms[i + 1];
+
+                // Get the current operator 
+                String currOperator = strarrOperators[i];
+
+                // Check if currTerm and nextTerm satisfy the condition in their respective terms (>, <, =, etc.)
+                boolean satisfies = currTerm.evaluate()
+
+
+            }
+        }
+        for (int i = 0; i < arrSQLTerms.length; i++) {
+
+
+
         ArrayList<String> results = new ArrayList<String>();
         
+        }
+        // Iterate over the table
+
+       
+
         return results.iterator();
+
     }
 
     private void loadTable(String strTableName) throws DBAppException{

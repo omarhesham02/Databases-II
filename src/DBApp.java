@@ -5,7 +5,7 @@ import src.classes.*;
 import src.exceptions.DBAppException;
 
 public class DBApp  {
-    public static final int N = 200;
+    public static final Properties Config = new Properties();
 
     private Table tblCurrent;
 
@@ -18,7 +18,14 @@ public class DBApp  {
         // test.selectFromTable();
     }
 
-    public DBApp() {}
+    public DBApp() {
+        try {
+            Config.load(new FileInputStream("./src/DBApp.config"));
+            System.out.println(Config);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
     
     /**
      * Following method creates one table only

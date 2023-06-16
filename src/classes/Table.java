@@ -228,7 +228,6 @@ public class Table {
         }   
     }
 
-    // TODO!!!!
     public boolean clusterKeyExists(Object x) {
         // TODO: If indexed use index
 
@@ -236,15 +235,30 @@ public class Table {
         final File[] PAGE_FILES = TABLE_DIR.listFiles();
         int i = 0;
         for (File curr: PAGE_FILES) {
-            // If clustering key less than minimum of page, return false
+            Page p = new Page(this, i);
+            i++;
 
             // If clustering key more than maximum of page, continue
+            int comparatorMax = Functions.cmpObj(p.getMaxCluster(), x, htblColNameType.get(this.ColNameClusteringKey));
+            if (comparatorMax == -1) {
+                continue;
+            }
+            
+            // If clustering key less than minimum of page, return false
+            int comparatorMin = Functions.cmpObj(p.getMinCluster(), x, htblColNameType.get(this.ColNameClusteringKey));
+            if (comparatorMin == 1) {
+                return false;
+            }
+            
+            // If clustering key is the max or min then it does exist
+            if (comparatorMin == 0 || comparatorMax == 0) {
+                return true;
+            }
 
-            // Return if exists, or continue
-            i++;
+            // Look through this page
+            return (p.findIndex(x) != -1);
         } 
-        return true;
-
+        return false;
     }
 
     public ArrayList<String> getColNames() {

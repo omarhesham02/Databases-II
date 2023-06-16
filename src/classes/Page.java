@@ -6,7 +6,7 @@ import src.DBApp;
 import src.exceptions.DBAppException;
 
 public class Page {
-    final static int N = DBApp.N;
+    final static int N = Integer.parseInt(DBApp.Config.getProperty("NUM_ROWS_PER_PAGE"));
 
     private int intPageNum;
     private Boolean isUpdated = false;
@@ -57,25 +57,32 @@ public class Page {
         return arrTuples.size() == N;
     }
 
+    // Linear start for insert
+    public Hashtable<String, String> insertIntoPage(Hashtable<String, Object> htblColNameValue) throws DBAppException {
+        return insertIntoPage(htblColNameValue, 0);
+    }
+
     /**
      * Following method inserts one row only.
      * @param htblColNameValue must include a value for the primary key.
      * @throws DBAppException
      */
-    public void insertIntoPage(Hashtable<String,Object> htblColNameValue) throws DBAppException {
+    public Hashtable<String, String> insertIntoPage(Hashtable<String,Object> htblColNameValue, int startIndex) throws DBAppException {
         // Ensure page has space
-        if (this.isFull()) return;
+        if (this.isFull()) return null;
 
         // Insert into place based on clustering key
         int arrSize = arrTuples.size();
         if (arrSize < 1) {
             arrTuples.add(stringify(htblColNameValue));
             isUpdated = true;
-            return;
+            return null;
         }
 
+        // Iterate over all tuples in page starting from given index
         String colNameClusteringKey = parentTable.getClusteringKey();
-        for (int i = 0; i < arrSize; i++) {
+        Hashtable<String, String> tempTuple = null;
+        for (int i = startIndex; i < arrSize; i++) {
             String curr = arrTuples.get(i).get(colNameClusteringKey);
             Object insert = htblColNameValue.get(colNameClusteringKey);
 
@@ -88,16 +95,19 @@ public class Page {
 
             // Insert here
             if (compare == 1) {
-                Hashtable<String, String> tempTuple = stringify(htblColNameValue);
+                tempTuple = stringify(htblColNameValue);
 
                 for (int j = i; j < arrSize; j++) {
                     Hashtable<String, String> next = arrTuples.get(j);
                     arrTuples.set(j, tempTuple);
                     tempTuple = next;
                 }
-                arrTuples.add(tempTuple);
                 isUpdated = true;
-                return;
+
+                if (!isFull()) {
+                    arrTuples.add(tempTuple);
+                    tempTuple = null;
+                } 
             }
         }
 
@@ -105,8 +115,11 @@ public class Page {
         if (!isUpdated) {
             arrTuples.add(stringify(htblColNameValue));
             isUpdated = true;
-            return;
+            return null;
         }
+
+        return tempTuple;
+
         // TODO: Update grid index
     }
 
@@ -262,5 +275,26 @@ public class Page {
 
     public String getMaxCluster() {
         return clusterMax;
+    }
+
+    public int findIndex(Object clusterValue) {
+        // Iterate over tuples in this page
+        for (int i = 0; i < arrTuples.size(); i++) {
+            String clusterColName = parentTable.getClusteringKey();
+            String clusterColType = parentTable.getColType(clusterColName);
+            String currClusterVal = arrTuples.get(i).get(clusterColName);
+
+            int comparator = Functions.cmpObj(currClusterVal, clusterValue, clusterColType);
+
+            if (comparator == 1) {
+                return -1;
+            }
+
+            if (comparator == 0) {
+                return i;
+            }
+        }
+
+        return -1;
     }
 }

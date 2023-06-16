@@ -60,18 +60,16 @@ public class Tests {
         htblColNameValue2.put("ProductName", "Macbook");
 
 
-        dbApp.insertIntoTable("Product", htblColNameValue);
+        // dbApp.insertIntoTable("Product", htblColNameValue);
         dbApp.insertIntoTable("Product", htblColNameValue2);
     }
 
     public void updateTable() throws DBAppException {
         Hashtable<String,Object> htblColNameValue = new Hashtable<String, Object>();
-        Hashtable<String,Object> htblColNameValue2 = new Hashtable<String, Object>();
 
         // htblColNameValue.put("ProductID", 200);
         htblColNameValue.put("ProductPrice", 12.00);
         //  htblColNameValue.put("ProductPrice", 1000.00);
-
 
         dbApp.updateTable("Product", "200", htblColNameValue);
     }

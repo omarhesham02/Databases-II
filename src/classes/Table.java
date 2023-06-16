@@ -97,7 +97,6 @@ public class Table {
         }
 
         // TODO: Ensure proper column types passed
-        // Check if foreign key it exists in foreign table
         Enumeration<String> keys = htblColNameType.keys();
         
         // Iterate over the given columns
@@ -134,40 +133,35 @@ public class Table {
         }
 
         // Call insert in page
+        if (!htblColNameIndexName.get(ColNameClusteringKey).equals("null")) {
+            System.out.println("Index found for " + ColNameClusteringKey + " while inserting in " + strTableName);
+
+            // TODO
+        }
         
         // TODO: Else linearly do it :)
         final File[] PAGE_FILES = TABLE_DIR.listFiles();
-        if (PAGE_FILES.length < 1) {
-            // Create first page
-            System.out.println("Creating first page for " + strTableName);
-            try {
-                Page p = new Page(this, 0);
-                p.insertIntoPage(htblColNameValue);
-                p.close();
-            } catch (Exception e) {
-                e.getMessage();
-            }
-
-        } else {
-
-            int i = 0;
-            for (File curr: PAGE_FILES) {
-                try {
-                    // curr.getAbsolutePath().split("/");
-                    Page p = new Page(this, i);
-                
-                    // If page already full go to next page
-                    if (p.isFull()) continue;
-                    
-                    p.insertIntoPage(htblColNameValue);
-                    p.close();
-                    break;
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                i++;
-            } 
+        int i = 0;
+        Boolean inserted = false;
+        for (File curr: PAGE_FILES) {
+            Page p = new Page(this, i);
+        
+            i++;
+            // If page already full and will not fit this index go to next page
+            int comparator = Functions.cmpObj(p.getMaxCluster(), htblColNameValue.get(ColNameClusteringKey), htblColNameType.get(ColNameClusteringKey));
+            if (p.isFull() && comparator < 1) continue;
+            
+            p.insertIntoPage(htblColNameValue);
+            p.close();
         }
+        
+        // If not inserted, make new page on num i
+        if (!inserted) {
+            Page p = new Page(this, i);
+            p.insertIntoPage(htblColNameValue);
+            p.close();
+        }
+
     }
 
  /**
@@ -242,7 +236,11 @@ public class Table {
         final File[] PAGE_FILES = TABLE_DIR.listFiles();
         int i = 0;
         for (File curr: PAGE_FILES) {
-            
+            // If clustering key less than minimum of page, return false
+
+            // If clustering key more than maximum of page, continue
+
+            // Return if exists, or continue
             i++;
         } 
         return true;

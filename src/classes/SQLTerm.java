@@ -25,6 +25,10 @@ public class SQLTerm {
 
     }
 
+    public String getTableName() {
+        return this.strTableName;
+    }
+
     public Boolean evaluate(String strValueToEval) throws DBAppException {
         Functions.checkType(objValue, strColType);
         

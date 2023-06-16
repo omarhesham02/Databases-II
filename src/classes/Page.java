@@ -74,13 +74,17 @@ public class Page {
             return;
         }
 
-
         String colNameClusteringKey = parentTable.getClusteringKey();
         for (int i = 0; i < arrSize; i++) {
             String curr = arrTuples.get(i).get(colNameClusteringKey);
             Object insert = htblColNameValue.get(colNameClusteringKey);
 
             int compare = Functions.cmpObj(curr, insert, parentTable.getColType(colNameClusteringKey));
+
+            // If equal, throw error
+            if (compare == 0) {
+                throw new DBAppException("Clustering index " + curr + " already exists.");
+            }
 
             // Insert here
             if (compare == 1) {
@@ -250,5 +254,13 @@ public class Page {
 
     public int getNum() {
         return intPageNum;
+    }
+
+    public String getMinCluster() {
+        return clusterMin;
+    }
+
+    public String getMaxCluster() {
+        return clusterMax;
     }
 }

@@ -13,8 +13,8 @@ public class DBApp  {
         Tests test = new Tests();
         // test.createTable();
         // test.insertTable();
-        // test.deleteFromTable();
-        test.createIndex();
+        test.deleteFromTable();
+        // test.createIndex();
         // test.selectFromTable();
         // test.updateTable();
 

@@ -27,7 +27,7 @@ public class Functions {
             case "java.lang.String": {
                 String s1 = (String) o1;
                 String s2 = (String) o2;
-                System.out.println(s1 + " " + s2 + ": " + s1.compareTo(s2));
+                
                 return s1.compareTo(s2);
             }
             case "java.lang.Double": {

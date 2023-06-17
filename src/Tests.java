@@ -168,7 +168,7 @@ public class Tests {
 
     public void deleteFromTable() throws DBAppException {
         Hashtable<String,Object> htblColNameValue = new Hashtable<String, Object>();
-        htblColNameValue.put("ProductID", 10);
+        htblColNameValue.put("ProductPrice", 1000.0);
         htblColNameValue.put("ProductName", "Test Product");
 
         dbApp.deleteFromTable("Product", htblColNameValue);
@@ -176,7 +176,7 @@ public class Tests {
 
     public void createIndex() throws DBAppException {
         // dbApp.createIndex("Sales", new String[] {"SaleID", "SaleDate"});
-        dbApp.createIndex("Product", new String[] {"ProductName", "ProductID"});
+        dbApp.createIndex("Product", new String[] {"ProductName", "ProductPrice"});
         // dbApp.createIndex("Product", new String[] {"ProductPrice", "ProductID"});
     }
 

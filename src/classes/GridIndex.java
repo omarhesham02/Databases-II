@@ -9,6 +9,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.Hashtable;
@@ -580,5 +581,84 @@ public class GridIndex {
         }
 
         return insert(htblColNameValue);
+    }
+
+    public void deleteFrom(Hashtable<String, Object> htblColNameValue) throws DBAppException {
+        int xStart = 0;
+        int yStart = 0;
+        int xEnd = NUM_BOUNDS;
+        int yEnd = NUM_BOUNDS;
+
+        Enumeration<String> keys = htblColNameValue.keys();
+        while (keys.hasMoreElements()) {
+            String colName = keys.nextElement();
+            Object currObj = htblColNameValue.get(colName);
+
+            if (colName.equals(strColNamex)) {
+                int index = indexOf(objToString(currObj), colName);
+                xStart = index;
+                xEnd = index + 1;
+            } else if (colName.equals(strColNamey)) {
+                int index = indexOf(objToString(currObj), colName);
+                yStart = index;
+                yEnd = index + 1;
+            }
+        }
+
+        Page currPage = null;
+        Hashtable<Integer, ArrayList<Integer>> foundList = new Hashtable<Integer, ArrayList<Integer>>();  
+        for (int y = yStart; y < yEnd; y++) {
+            for (int x = xStart; x < xEnd; x++) {
+                GridPoint curr = gridPoints[x][y];
+                
+                while (curr != null) {
+                    if (currPage == null || currPage.getNum() != curr.getPage()) {
+                        currPage = new Page(parentTable, curr.getPage());
+                    }
+
+                    boolean flag = true;
+                    Hashtable<String, String> tuple = currPage.getTuple(curr.getIndex());
+                    Enumeration<String> keys2 = htblColNameValue.keys();
+                    while (keys2.hasMoreElements()) {
+                        String colName2 = keys2.nextElement();
+
+                        int comparator = Functions.cmpObj(tuple.get(colName2), htblColNameValue.get(colName2), parentTable.getColType(colName2));
+
+                        if (comparator != 0) {
+                            flag = false;
+                            break;
+                        }
+                    }
+
+                    if (flag) {
+                        if (foundList.containsKey(curr.getPage())) {
+                            (foundList.get(curr.getPage())).add(curr.getIndex());
+                        } else {
+                            ArrayList<Integer> i = new ArrayList<Integer>();
+                            i.add(curr.getIndex());
+                            foundList.put(curr.getPage(), i);
+                        }
+
+                    }
+
+                    curr = curr.next;
+                }
+            }
+        }
+
+        // Delete
+        Enumeration<Integer> keys2 = foundList.keys();
+        while (keys2.hasMoreElements()) {
+            int pageNum = keys2.nextElement();
+            currPage = new Page(parentTable, pageNum);
+
+            ArrayList<Integer> indexes = foundList.get(pageNum);
+            Collections.sort(indexes);
+
+            for (int i = (indexes.size()-1); i >= 0; i--) {
+                currPage.deleteTuple(indexes.get(i));
+            }
+            currPage.close();
+        }
     }
 }

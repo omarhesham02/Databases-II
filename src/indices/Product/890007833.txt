@@ -1,6 +1,0 @@
-ProductName,ProductID
-A,I,Q,Z
-0,333,666,1000
-NULL,0|1;0|2;1|0,0|0;0|3
-1|1,NULL,NULL
-NULL,1|2,NULL

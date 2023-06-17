@@ -164,40 +164,34 @@ public class Page {
         // Iterate over the tuples of the page looking for a tuple with an attribute and its corresponding value that exists in htblColNameValue
         // If found, delete the tuple
         try {
-            Enumeration<String> colName = htblColNameValue.keys();
-                 // Check if this tuple has any attribute with a value that exists in htblColNameValue
-                // -> Iterate over htblColNameValue and check if there are any attributes from it contained in the tuple. If so, check if they have the same value
+            // Check if this tuple has any attribute with a value that exists in htblColNameValue
+            // -> Iterate over htblColNameValue and check if there are any attributes from it contained in the tuple. If so, check if they have the same value
+            
+            int countDeleted = 0;
+            for (int i = 0; i < arrTuples.size() - countDeleted; i++) {
+                Enumeration<String> colNames = htblColNameValue.keys();
+                Boolean flag = true;
+                while (colNames.hasMoreElements()) {
+                    String colName = colNames.nextElement();
+                    Hashtable<String,String> tuple = arrTuples.get(i);
 
-                int countDeleted = 0;
-                
-                for (int i = 0; i < arrTuples.size() - countDeleted; i++) {
-                    Hashtable<String, String> tuple = arrTuples.get(i);
-                    String nextCol = colName.nextElement();
-                    String colType = parentTable.getColType(nextCol);
-                                                       
-                    // Check if the tuple does not have this attribute
-                    if (!tuple.containsKey(nextCol)) 
-                        continue;
+                    int comparator = Functions.cmpObj(tuple.get(colName), htblColNameValue.get(colName), parentTable.getColType(colName));
 
-                    // If it does, check if the value of the attribute in the tuple is the same as the value in htblColNameValue
-                    // If a value does not match, continue and move on to the next tuple
-                    String tupleValue = tuple.get(nextCol);
-                        if (Functions.cmpObj(tupleValue, htblColNameValue.get(nextCol), colType) != 0)  {
-                            continue;
-                        }
-
-                    // Otherwise, delete the tuple and move on to the next tuple
-                    arrTuples.remove(i);
-                    countDeleted++;
-                    i--;
-                    this.isUpdated = true;
-
-                    // if (Functions.cmpObj(tupleValue, deleteValue, colType) == 0) {
-                        // arrTuples.remove(tuple);
-                        // this.isUpdated = true;
-                        // break;
+                    if (comparator != 0) {
+                        flag = false;
+                        break;
                     }
-                } catch (Exception e) {
+                }
+
+                if (flag) {
+                    arrTuples.remove(i);
+                    isUpdated = true;
+                    i--;
+                }
+            }
+            
+                    
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -336,5 +330,10 @@ public class Page {
         }
 
         return insertIntoPage(htblColNameValue);
+    }
+
+    public void deleteTuple(int integer) {
+        arrTuples.remove(integer);
+        isUpdated = true;
     }
 }

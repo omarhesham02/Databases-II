@@ -300,21 +300,37 @@ public class Table {
         }
         
         
-        // TODO: Check if at least column with index
-        // Enumeration<String> keys2 = htblColNameValue.keys();
-        // // Iterate over the given columns
-        // ArrayList<String> IndexNames = new ArrayList<String>();
-        // while (keys2.hasMoreElements()) {
-        //     String colName = keys2.nextElement();
-        //     if (!htblColNameIndexName.get(colName).equals("null")) {
-        //         System.out.println("Index found for " + colName + " while deleting in " + strTableName);
-    
+        // Check if at least column with index
+        Enumeration<String> keys2 = htblColNameValue.keys();
+        // Iterate over the given columns
+        ArrayList<String> IndexNames = new ArrayList<String>();
+        while (keys2.hasMoreElements()) {
+            String colName = keys2.nextElement();
+            String indexName = htblColNameIndexName.get(colName);
+
+            if (!indexName.equals("null")) {
+                System.out.println("Index found for " + colName + " while deleting in " + strTableName);
                 
-        //     }
-        // }
+                // Then two columns found, use this
+                if (IndexNames.contains(indexName)) {
+                    GridIndex index = new GridIndex(this, indexName);
+                    index.deleteFrom(htblColNameValue);
+                    return;
+                }
+                
+                IndexNames.add(indexName);
+            }
+        }
+        
+        // If at least one viable index, grab first and use
+        if (IndexNames.size() > 0) {
+            GridIndex index = new GridIndex(this, IndexNames.get(0));
+            index.deleteFrom(htblColNameValue);
+            return;
+        }
+        
 
-
-        // TODO: Else linearly do it :)
+        // Else linearly do it :)
         final File[] PAGE_FILES = TABLE_DIR.listFiles();
         int i = 0;
         for (File curr: PAGE_FILES) {

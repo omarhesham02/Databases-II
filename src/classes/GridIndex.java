@@ -660,5 +660,7 @@ public class GridIndex {
             }
             currPage.close();
         }
+        
+        initialize();
     }
 }

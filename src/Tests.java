@@ -1,6 +1,8 @@
 package src;
 
 import src.exceptions.DBAppException;
+
+import java.sql.Date;
 import java.util.*;
 import src.classes.*;
 
@@ -13,7 +15,7 @@ public class Tests {
     }
 
     public void createTable() throws DBAppException {
-        // Create table
+        // Create table Product
         Hashtable<String, String> htblColNameType = new Hashtable<String, String>();
         htblColNameType.put("ProductID", "java.lang.Integer");
         htblColNameType.put("ProductName", "java.lang.String");
@@ -33,7 +35,36 @@ public class Tests {
         
         String[] computedCols = {};
         
-        dbApp.createTable("Product", "ProductID", htblColNameType, htblColNameMin, htblColNameMax, htblForeignKeys, computedCols);
+        // dbApp.createTable("Product", "ProductID", htblColNameType, htblColNameMin, htblColNameMax, htblForeignKeys, computedCols);
+        
+        // Create table Sale
+        Hashtable<String, String> htblColNameType2 = new Hashtable<String, String>();
+        htblColNameType2.put("SaleID", "java.lang.Integer");
+        htblColNameType2.put("SaleDate", "java.util.Date");
+        htblColNameType2.put("ProductID", "java.lang.Integer");
+        htblColNameType2.put("Quantity", "java.lang.Integer");
+        htblColNameType2.put("TotalAmount", "java.lang.Double");
+        
+        Hashtable<String, String> htblColNameMin2 = new Hashtable<String, String>();
+        htblColNameMin2.put("SaleID", "0");
+        htblColNameMin2.put("SaleDate", "01.01.2000");
+        htblColNameMin2.put("ProductID", "0");
+        htblColNameMin2.put("Quantity", "1");
+        htblColNameMin2.put("TotalAmount", "0");
+        
+        Hashtable<String, String> htblColNameMax2 = new Hashtable<String, String>();
+        htblColNameMax2.put("SaleID", "10000");
+        htblColNameMax2.put("SaleDate", "31.12.2030");
+        htblColNameMax2.put("ProductID", "1000");
+        htblColNameMax2.put("Quantity", "10000");
+        htblColNameMax2.put("TotalAmount", "1000000000");
+        
+        Hashtable<String, String> htblForeignKeys2 = new Hashtable<String, String>();
+        htblForeignKeys2.put("ProductID", "Product.ProductID");
+
+        String[] computedCols2 = {"TotalAmount"};
+        
+        dbApp.createTable("Sales", "SaleID", htblColNameType2, htblColNameMin2, htblColNameMax2, htblForeignKeys2, computedCols2);
     }
     
     public void testTable() throws DBAppException {
@@ -49,29 +80,90 @@ public class Tests {
     public void insertTable() throws DBAppException {
         // Test insert into table
         Hashtable<String,Object> htblColNameValue = new Hashtable<String, Object>();
-        Hashtable<String,Object> htblColNameValue2 = new Hashtable<String, Object>();
 
         htblColNameValue.put("ProductID", 800);
         htblColNameValue.put("ProductName", "Lenovo");
         htblColNameValue.put("ProductPrice", 96000.00);
+        try {
+            // dbApp.insertIntoTable("Product", htblColNameValue);
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
         
-        htblColNameValue2.put("ProductID", 600);
-        htblColNameValue2.put("ProductPrice", 55000.20);
-        htblColNameValue2.put("ProductName", "Acer");
+        htblColNameValue.clear();
+        htblColNameValue.put("ProductID", 400);
+        htblColNameValue.put("ProductPrice", 20000.20);
+        htblColNameValue.put("ProductName", "Acer");
+        try {
+            // dbApp.insertIntoTable("Product", htblColNameValue);
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
 
+        htblColNameValue.clear();
+        htblColNameValue.put("ProductID", new Integer( 1 ));
+        htblColNameValue.put("ProductName", new String("TV" ) );
+        htblColNameValue.put("ProductPrice", new Double( 499 ) );
+        try {
+            // dbApp.insertIntoTable("Product", htblColNameValue);
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
 
-        // dbApp.insertIntoTable("Product", htblColNameValue);
-        dbApp.insertIntoTable("Product", htblColNameValue2);
+        htblColNameValue.clear( );
+        htblColNameValue.put("ProductID", new Integer( 2 ));
+        htblColNameValue.put("ProductName", new String("Mobile Phone" ) );
+        htblColNameValue.put("ProductPrice", new Double( 299 ) );
+        try {
+            // dbApp.insertIntoTable("Product", htblColNameValue);
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+
+        htblColNameValue.clear( );
+        htblColNameValue.put("ProductID", new Integer( 3 ));
+        htblColNameValue.put("ProductName", new String("Power Bank" ) );
+        htblColNameValue.put("ProductPrice", new Double( 15.5 ) );
+        try {
+            dbApp.insertIntoTable("Product", htblColNameValue);
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+        
+        
+        // Insert into table Sales
+        htblColNameValue.clear( );
+        htblColNameValue.put("SaleID", new Integer( 1 ));
+        htblColNameValue.put("ProductID", new Integer( 2 ) ); // Mobile Phone
+        htblColNameValue.put("SaleDate", new Date(2012-1900, 1, 1));
+        htblColNameValue.put("Quantity", 1200);
+        try {
+            // dbApp.insertIntoTable("Sales", htblColNameValue);
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+        
+        htblColNameValue.clear();
+        htblColNameValue.put("SaleID", 123);
+        htblColNameValue.put("SaleDate", new Date(2002-1900, 1, 1));
+        htblColNameValue.put("ProductID", 523);
+        // htblColNameValue.put("TotalAmount", 96000.00);
+        htblColNameValue.put("Quantity", 5000);
+        try {
+            // dbApp.insertIntoTable("Sales", htblColNameValue);
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
     }
 
     public void updateTable() throws DBAppException {
         Hashtable<String,Object> htblColNameValue = new Hashtable<String, Object>();
 
         // htblColNameValue.put("ProductID", 200);
-        htblColNameValue.put("ProductPrice", 12.00);
+        htblColNameValue.put("ProductPrice", 80000.2);
         //  htblColNameValue.put("ProductPrice", 1000.00);
 
-        dbApp.updateTable("Product", "200", htblColNameValue);
+        dbApp.updateTable("Product", "100", htblColNameValue);
     }
 
     public void deleteFromTable() throws DBAppException {

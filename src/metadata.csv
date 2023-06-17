@@ -1,3 +1,8 @@
-Product,ProductID,java.lang.Integer,true,1124178782,grid,0,1000,false,null,null,false
-Product,ProductPrice,java.lang.Double,false,1124178782,grid,0,100000,false,null,null,false
+Product,ProductID,java.lang.Integer,true,905779213,grid,0,1000,false,null,null,false
+Product,ProductPrice,java.lang.Double,false,905779213,grid,0,100000,false,null,null,false
 Product,ProductName,java.lang.String,false,null,null,A,ZZZZZZZZZZZ,false,null,null,false
+Sales,TotalAmount,java.lang.Double,false,null,null,0,1000000000,false,null,null,true
+Sales,ProductID,java.lang.Integer,false,null,null,0,1000,true,Product,ProductID,false
+Sales,SaleID,java.lang.Integer,true,null,null,0,10000,false,null,null,false
+Sales,SaleDate,java.util.Date,false,null,null,01.01.2000,31.12.2030,false,null,null,false
+Sales,Quantity,java.lang.Integer,false,null,null,1,10000,false,null,null,false

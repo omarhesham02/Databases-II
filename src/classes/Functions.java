@@ -27,7 +27,7 @@ public class Functions {
             case "java.lang.String": {
                 String s1 = (String) o1;
                 String s2 = (String) o2;
-
+                System.out.println(s1 + " " + s2 + ": " + s1.compareTo(s2));
                 return s1.compareTo(s2);
             }
             case "java.lang.Double": {
@@ -36,13 +36,13 @@ public class Functions {
                 
                 return d1.compareTo(d2);
             }
-            case "java.lang.Date": {
-                String [] arrstrDate = o1.split(".");
+            case "java.util.Date": {
+                String [] arrstrDate = o1.split("\\.");
                 int year = Integer.parseInt(arrstrDate[2]);
                 int month = Integer.parseInt(arrstrDate[1]);
                 int day = Integer.parseInt(arrstrDate[0]);
                 
-                Date d1 = new Date(year, month, day);
+                Date d1 = new Date(year - 1900, month, day);
                 Date d2 = (Date) o2;
 
                 return d1.compareTo(d2);
@@ -80,7 +80,16 @@ public class Functions {
                 break;
             }
             case "java.lang.String": {
-                // TODO:
+                returnBounds = new String[numBounds + 1];
+                int step = 26 / numBounds;
+
+                char currBound = 'A';
+                for (int i = 0; i < numBounds; i++) {
+                    returnBounds[i] = String.valueOf(currBound);
+                    currBound += step;
+                }
+                returnBounds[numBounds] = "Z";
+                
                 break;
             }
             case "java.lang.Double": {
@@ -96,7 +105,7 @@ public class Functions {
                 
                 break;
             }
-            case "java.lang.Date": {
+            case "java.util.Date": {
                 // Get the difference in days between the min and max and divide it by the num of bounds
                 SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
                 returnBounds = new Date[numBounds + 1];
@@ -134,7 +143,7 @@ public class Functions {
      * @return
      */
     public static Boolean checkDate(String strDateVal) {
-        String[] strarrDate = strDateVal.split(".");
+        String[] strarrDate = strDateVal.split("\\.");
 
         // Ensure only 3 parts to date
         if (strarrDate.length != 3) {

@@ -18,6 +18,14 @@ public class GridPoint {
         return this.index;
     }
 
+    public void setPage(int page) {
+        this.page = page;
+    }
+
+    public void setIndex(int index) {
+        this.index = index;
+    }
+
     public String toString() {
         if (this.next == null) {
             return this.page + "|" + this.index;

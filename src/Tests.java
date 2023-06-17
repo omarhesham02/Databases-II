@@ -95,7 +95,7 @@ public class Tests {
         htblColNameValue.put("ProductPrice", 20000.20);
         htblColNameValue.put("ProductName", "Acer");
         try {
-            // dbApp.insertIntoTable("Product", htblColNameValue);
+            dbApp.insertIntoTable("Product", htblColNameValue);
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }
@@ -125,7 +125,7 @@ public class Tests {
         htblColNameValue.put("ProductName", new String("Power Bank" ) );
         htblColNameValue.put("ProductPrice", new Double( 15.5 ) );
         try {
-            dbApp.insertIntoTable("Product", htblColNameValue);
+            // dbApp.insertIntoTable("Product", htblColNameValue);
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }
@@ -175,7 +175,9 @@ public class Tests {
     }
 
     public void createIndex() throws DBAppException {
-        dbApp.createIndex("Product", new String[] {"ProductPrice", "ProductID"});
+        // dbApp.createIndex("Sales", new String[] {"SaleID", "SaleDate"});
+        dbApp.createIndex("Product", new String[] {"ProductName", "ProductID"});
+        // dbApp.createIndex("Product", new String[] {"ProductPrice", "ProductID"});
     }
 
     public void selectFromTable() throws DBAppException {

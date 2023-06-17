@@ -7,8 +7,10 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.Enumeration;
 import java.util.Hashtable;
 
 import src.exceptions.DBAppException;
@@ -127,7 +129,7 @@ public class GridIndex {
 
                 break;
             }
-            case "java.lang.Date": {
+            case "java.util.Date": {
                 result = new Date[arrstrBounds.length];
                 SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
 
@@ -144,10 +146,12 @@ public class GridIndex {
         return result;
     }
 
-    private void initialize() throws DBAppException {
+    public void initialize() throws DBAppException {
         this.isUpdated = true;
         
-        this.indexName = Integer.toString(new Date().hashCode() * -1);
+        if (this.indexName == null) {
+            this.indexName = Integer.toString(new Date().hashCode() * -1);
+        }
         this.INDEX_PATH = new File("./src/indices/" + parentTable.getName() + "/" + indexName + ".txt");
 
         // Create boundaries
@@ -157,10 +161,9 @@ public class GridIndex {
         xBounds = Functions.getBounds(parentTable.getColMin(strColNamex), parentTable.getColMax(strColNamex), NUM_BOUNDS, xColType);
         yBounds = Functions.getBounds(parentTable.getColMin(strColNamey), parentTable.getColMax(strColNamey), NUM_BOUNDS, yColType);
 
-        System.out.println(strColNamex + ": " + Arrays.toString(xBounds));
-        System.out.println(strColNamey + ": " + Arrays.toString(yBounds));
         // Sift through table linearly and get all the tuples inserted properly
         TableScanner scanner = new TableScanner(parentTable);
+        this.gridPoints = new GridPoint[NUM_BOUNDS][NUM_BOUNDS];
 
         while (scanner.hasNext()) {
             Hashtable<String, String> tuple = scanner.next();
@@ -178,6 +181,11 @@ public class GridIndex {
                 curr = curr.next;
             }
             curr.next = new GridPoint(scanner.getPageNum(), scanner.getIndex());
+        }
+
+        if (INDEX_PATH.exists()) {
+            this.save();
+            return;
         }
 
         // Update metadata index columns
@@ -209,9 +217,8 @@ public class GridIndex {
             metaW.flush();
             metaW.close();
             metaR.close();
-
-            this.save();
             parentTable.loadMetadata();
+            this.save();
         } catch (IOException e) {
             throw new DBAppException(e.getMessage());
         }
@@ -327,5 +334,251 @@ public class GridIndex {
         }
 
         return index;
+    }
+
+
+    public Hashtable<String, String> insert(Hashtable<String, Object> tuple) throws DBAppException {
+        Boolean isInserted = false;
+        Hashtable<String, String> strTuple = Page.stringify(tuple, parentTable);
+        Hashtable<String, String> kickedOut = null;
+        int[] indexOnGrid = indexOf(strTuple);
+
+        GridPoint point = new GridPoint(0, 0);
+
+        // Check grid point that it belongs to
+        // If null, insert based on next smaller index
+        int x = indexOnGrid[0];
+        int y = indexOnGrid[1];
+        if (gridPoints[x][y] == null) {
+            if (parentTable.getClusteringKey().equals(strColNamex)) {
+                x--;
+            } else {
+                y--;
+            }
+            while (x >= 0 && y >= 0) {
+                
+                if (gridPoints[x][y] == null) {
+                    if (parentTable.getClusteringKey().equals(strColNamex)) {
+                        x--;
+                    } else {
+                        y--;
+                    }
+                    continue;
+                } 
+                
+                GridPoint curr = gridPoints[x][y];
+                while (curr.next != null) {
+                    if (curr.getPage() > point.getPage()) {
+                        point.setPage(curr.getPage());
+                        point.setIndex(curr.getIndex() + 1);
+                    }
+                    curr = curr.next;
+                }
+                if (parentTable.getClusteringKey().equals(strColNamex)) {
+                    x--;
+                } else {
+                    y--;
+                }
+                break;
+            }
+
+            Page curr = new Page(parentTable, point.getPage());
+
+            if (curr.isFull()) {
+                curr.close();
+                point.setPage(point.getPage() + 1);
+                point.setIndex(0);
+                curr = new Page(parentTable, point.getPage());
+            }
+
+            kickedOut = curr.insertIntoPage(tuple, point.getIndex());
+            isInserted = true;
+            curr.close();
+
+            gridPoints[indexOnGrid[0]][indexOnGrid[1]] = point;
+        } else {
+            // If not null comb through indices, finding the smallest index greater than insert
+            GridPoint curr = gridPoints[x][y];
+
+            Page currPage = null;
+            String clusterType = parentTable.getColType(parentTable.getClusteringKey());
+            Object inputVal = tuple.get(parentTable.getClusteringKey());
+            int greatestPage = curr.getPage();
+            int greatestIndex = curr.getIndex() == 0 ? 0 : curr.getIndex() - 1;
+            GridPoint toInsert = new GridPoint(greatestPage, greatestIndex);
+            while (curr != null) {
+                if (currPage == null || currPage.getNum() != curr.getPage()) {
+                    currPage = new Page(parentTable, curr.getPage());
+                }
+
+                Hashtable<String, String> pointTuple = currPage.getTuple(curr.getIndex());
+                String clusterVal = pointTuple.get(parentTable.getClusteringKey());
+                int comparator = Functions.cmpObj(clusterVal, inputVal, clusterType);
+
+                if (comparator == 0) {
+                    throw new DBAppException("Cannot insert duplicate cluster value " + inputVal);
+                }
+
+                // Place after
+                if (comparator == -1) {
+                    if (curr.getPage() > greatestPage) {
+                        greatestPage = curr.getIndex();
+                        greatestIndex = curr.getIndex();
+                    }
+                }
+
+                curr = curr.next;
+            }
+
+            toInsert.setPage(greatestPage);
+            toInsert.setIndex(greatestIndex);
+
+            if (currPage == null || currPage.getNum() != toInsert.getPage()) {
+                currPage = new Page(parentTable, toInsert.getPage());
+            }
+
+            int maxComp = Functions.cmpObj(currPage.getMaxCluster(), inputVal, clusterType);
+            if (currPage.isFull() && maxComp < 1) {
+                toInsert.setIndex(0);
+                toInsert.setPage(greatestIndex + 1);
+                currPage = new Page(parentTable, toInsert.getPage());
+            }
+
+            kickedOut = currPage.insertIntoPage(tuple, toInsert.getIndex());
+            currPage.close();
+            isInserted = true;
+        }
+
+        // Ensure there was space
+        if (!isInserted) {
+            throw new DBAppException("Cannot find space to insert tuple using index " + indexName);
+        }
+
+        initialize();
+        return kickedOut;
+    }
+
+
+    public void updateTuple(String clusterVal, Hashtable<String, Object> newValues) throws DBAppException {
+        // Find where this clusterVal is
+        String colName = parentTable.getClusteringKey();
+        String colType = parentTable.getColType(colName);
+        Object objClusterVal = strToObj(clusterVal, colType);
+
+        // Set search space accordingly
+        int index = indexOf(clusterVal, colName);
+        int yStart = 0;
+        int xStart = 0;
+        int xEnd = NUM_BOUNDS;
+        int yEnd = NUM_BOUNDS;
+        if (strColNamex.equals(colName)) {
+            xStart = index;
+            xEnd = index + 1;
+        } else if (strColNamey.equals(colName)) {
+            yStart = index;
+            yEnd = index + 1;
+        }
+
+        Page currPage = null;
+        for (int y = yStart; y < yEnd; y++) {
+
+            for (int x = xStart; x < xEnd; x++) {
+                GridPoint currNode = gridPoints[x][y];
+                if (currNode == null) continue;
+
+                // Loop through nodes in this slot
+                while (currNode != null) {
+                    // Load tuple in this node
+                    if (currPage == null || currPage.getNum() != currNode.getPage()) {
+                        currPage = new Page(parentTable, currNode.getPage());
+                    }
+                    Hashtable<String, String> tuple = currPage.getTuple(currNode.getIndex());
+
+                    int comparator = Functions.cmpObj(tuple.get(colName), objClusterVal, colType);
+
+                    if (comparator != 0) {
+                        currNode = currNode.next;
+                        continue;
+                    }
+
+                    currPage.updateTuple(currNode.getIndex(), newValues);
+                    currPage.close();
+                    initialize();
+                    return;
+                }
+            }
+        }
+
+        throw new DBAppException("Cannot update tuple.\nCluster value: " + clusterVal + " doesn't exist.");
+    }
+
+    public static Object strToObj(String value, String type) throws DBAppException {
+        switch (type) {
+            case "java.lang.String": {
+                return value;
+            }
+            case "java.lang.Double": {
+                return Double.parseDouble(value);
+            }
+            case "java.lang.Integer": {
+                return Integer.parseInt(value);
+            }
+            case "java.util.Date": {
+                SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
+                try {
+                    return dateFormat.parseObject(value);
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+            }
+            default: {
+                throw new DBAppException("Invalid data type " + type + " while converting in index");
+            }
+        }
+    }
+
+    public String getName() {
+        return this.indexName;
+    }
+
+    public ArrayList<String> query(SQLTerm[] arrSQLTerms, String[] strarrOperators) {
+        ArrayList<String> result = new ArrayList<String>();
+        // TODO
+        return result;
+    }
+
+    private int indexOf(String value, String colName) throws DBAppException {
+        Object[] bounds;
+        if (colName.equals(strColNamex)) {
+            bounds = xBounds;
+        } else if (colName.equals(strColNamey)) {
+            bounds = yBounds;
+        } else {
+            throw new DBAppException("Trying to get index " + colName + " in grid index " + this.indexName);
+        }
+
+        // Iterate over boundaries
+        for (int x = 1; x <= NUM_BOUNDS; x++) {
+            int comparator = Functions.cmpObj(value, bounds[x], parentTable.getColType(colName));
+
+            if (comparator < 0) {
+                return x - 1;
+            }
+        }
+
+        throw new DBAppException("Index in boundaries for " + colName + ": " + value + " not found.");
+    }
+
+    public Hashtable<String, String> forceInsert(Hashtable<String, String> kickedOut) throws DBAppException {
+        // Parse it
+        Enumeration<String> colNames = kickedOut.keys();
+        Hashtable<String, Object> htblColNameValue = new Hashtable<String, Object>();
+        while (colNames.hasMoreElements()) {
+            String colName = colNames.nextElement();
+            Object parsed = GridIndex.strToObj(kickedOut.get(colName), parentTable.getColType(colName));
+            htblColNameValue.put(colName, parsed);
+        }
+
+        return insert(htblColNameValue);
     }
 }

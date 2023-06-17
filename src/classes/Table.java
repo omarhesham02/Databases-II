@@ -37,7 +37,14 @@ public class Table {
     }
 
     private void loadIndex(String indexName) throws DBAppException{
-        htblIndexNameIndex.put(indexName, new GridIndex(this, indexName));
+        File INDEX_PATH = new File("./src/indices/" + strTableName + "/" + indexName + ".txt");
+        if (INDEX_PATH.exists()) {
+            htblIndexNameIndex.put(indexName, new GridIndex(this, indexName));
+        }
+    }
+
+    public Boolean indexExists(String colName) {
+        return !htblColNameIndexName.get(colName).equals("null");
     }
 
     public void loadMetadata() throws DBAppException {
@@ -100,6 +107,11 @@ public class Table {
         }
     }
 
+    public void addIndex(GridIndex x) {
+        String indexName = x.getName();
+        htblIndexNameIndex.put(indexName, x);
+    }
+
     /**
      * Following method inserts one row only.
      * @param htblColNameValue must include a value for the primary key.
@@ -112,7 +124,7 @@ public class Table {
             throw new DBAppException("Clustering key value cannot be null");
         }
 
-        // TODO: Ensure proper column types passed
+        // Ensure proper column types passed
         Enumeration<String> keys = htblColNameType.keys();
         
         // Iterate over the given columns
@@ -122,7 +134,7 @@ public class Table {
             Object objValue = htblColNameValue.get(colName);
 
             // Check if computed column
-            if (htblColNameComputed.get(colName)) {
+            if (htblColNameComputed.get(colName) && htblColNameValue.containsKey(colName)) {
                 throw new DBAppException("User cannot enter value for computed column " + colName);
             }
 
@@ -148,37 +160,56 @@ public class Table {
             int cmpValueMax = Functions.cmpObj((String) htblColNameMax.get(colName), objValue, colType);
             int cmpValueMin = Functions.cmpObj((String) htblColNameMin.get(colName), objValue, colType);
             if (cmpValueMax < 0 || cmpValueMin > 0) {
-                throw new DBAppException("Cannot insert.\nValue passed was out of bounds for column " + colType);
+                throw new DBAppException("Cannot insert.\nValue passed was out of bounds for column " + colName + ": " + colType);
             }
         }
 
-        // !Force load null into computed column values
+        // !Force load min into computed column values
         Iterator<String> compCols = getComputedCols();
         while (compCols.hasNext()) {
             String colName = compCols.next();
-            htblColNameValue.put(colName, null);
+            Object colMin = GridIndex.strToObj(htblColNameMin.get(colName), htblColNameType.get(colName));
+            htblColNameValue.put(colName, colMin);
         }
 
-        // Call insert in page
+        // Call insert in page if index exists
         if (!htblColNameIndexName.get(ColNameClusteringKey).equals("null")) {
             System.out.println("Index found for " + ColNameClusteringKey + " while inserting in " + strTableName);
 
-            // TODO
+            GridIndex index = htblIndexNameIndex.get(htblColNameIndexName.get(ColNameClusteringKey));
+            
+            Hashtable<String, String> kickedOut = index.insert(htblColNameValue);
+            while (kickedOut != null) {
+                kickedOut = index.forceInsert(kickedOut);
+            }
+            return;
         }
         
-        // TODO: Else linearly do it :)
+        // Else linearly do it :)
         final File[] PAGE_FILES = TABLE_DIR.listFiles();
         int i = 0;
+        Hashtable<String, String> kickedOut = null;
         Boolean inserted = false;
         for (File curr: PAGE_FILES) {
             Page p = new Page(this, i);
         
             i++;
             // If page already full and will not fit this index go to next page
-            int comparator = Functions.cmpObj(p.getMaxCluster(), htblColNameValue.get(ColNameClusteringKey), htblColNameType.get(ColNameClusteringKey));
-            if (p.isFull() && comparator < 1) continue;
+            if (p.getMaxCluster() != null) {
+                int comparator = Functions.cmpObj(p.getMaxCluster(), htblColNameValue.get(ColNameClusteringKey), htblColNameType.get(ColNameClusteringKey));
+                if (p.isFull() && comparator < 1) continue;
+            }
             
-            p.insertIntoPage(htblColNameValue);
+            kickedOut = p.insertIntoPage(htblColNameValue);
+            p.close();
+            inserted = true;
+            break;
+        }
+
+        while (kickedOut != null) {
+
+            Page p = new Page(this, i++);
+            kickedOut = p.forceInsert(kickedOut);
             p.close();
         }
         
@@ -213,27 +244,41 @@ public class Table {
      * @param htblColNameValue holds the key and new value, and will not include clustering key as column name
      * @throws DBAppException
      */
-    public void updateTable(String strTableName, String strClusteringKeyValue, Hashtable<String,Object> htblColNameValue) throws DBAppException {
-            // TODO: Use index to find the row to update if strClusteringKeyValue has an index
+    public void updateTable(String strClusteringKeyValue, Hashtable<String,Object> htblColNameValue) throws DBAppException {
+        // Ensure proper data types passed
+        Enumeration<String> colNames = htblColNameValue.keys();
+        while (colNames.hasMoreElements()) {
+            String colName = colNames.nextElement();
+            Functions.checkType(htblColNameValue.get(colName), htblColNameType.get(colName));
+        }
+        
+        // Use index to find the row to update if strClusteringKeyValue has an index 
+        if (!htblColNameIndexName.get(ColNameClusteringKey).equals("null")) {
+            System.out.println("Index found for " + ColNameClusteringKey + " while inserting in " + strTableName);
 
-            Table tb = new Table(strTableName);
-            
-            String strClusteringKey = tb.getClusteringKey();
+            GridIndex index = htblIndexNameIndex.get(htblColNameIndexName.get(ColNameClusteringKey));
+            index.updateTuple(strClusteringKeyValue, htblColNameValue);
+            return;
+        }
 
-            // Scan all page files linearly to update all matching records
-            final File[] PAGE_FILES = TABLE_DIR.listFiles();
+        Table tb = this;
+        
+        String strClusteringKey = tb.getClusteringKey();
 
-            int i = 0;
-            for (File curr: PAGE_FILES) {
-                try {
-                    Page p = new Page(this, i++);
-                    p.updatePage(strClusteringKey, strClusteringKeyValue, htblColNameValue);
-                    p.close();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+        // Scan all page files linearly to update all matching records
+        final File[] PAGE_FILES = TABLE_DIR.listFiles();
+
+        int i = 0;
+        for (File curr: PAGE_FILES) {
+            try {
+                Page p = new Page(this, i++);
+                p.updatePage(strClusteringKey, strClusteringKeyValue, htblColNameValue);
+                p.close();
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        } 
+        }
+    } 
 
     /**
      * Following method could be used to delete one or more rows.
@@ -254,7 +299,20 @@ public class Table {
             Functions.checkType(objValue, colType);
         }
         
+        
         // TODO: Check if at least column with index
+        // Enumeration<String> keys2 = htblColNameValue.keys();
+        // // Iterate over the given columns
+        // ArrayList<String> IndexNames = new ArrayList<String>();
+        // while (keys2.hasMoreElements()) {
+        //     String colName = keys2.nextElement();
+        //     if (!htblColNameIndexName.get(colName).equals("null")) {
+        //         System.out.println("Index found for " + colName + " while deleting in " + strTableName);
+    
+                
+        //     }
+        // }
+
 
         // TODO: Else linearly do it :)
         final File[] PAGE_FILES = TABLE_DIR.listFiles();

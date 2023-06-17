@@ -14,8 +14,16 @@ public class DBApp  {
         // test.createTable();
         // test.insertTable();
         // test.deleteFromTable();
-        // test.createIndex();
-        test.selectFromTable();
+        test.createIndex();
+        // test.selectFromTable();
+        // test.updateTable();
+
+        // DBApp app = new DBApp();
+        // app.loadTable("Product");
+        // TableScanner scanner = new TableScanner(app.tblCurrent);
+        // while (scanner.hasNext()) {
+        //     System.out.println(scanner.next());
+        // }
     }
 
     public DBApp() {
@@ -45,7 +53,6 @@ public class DBApp  {
         if (TABLE_DIR.exists()) {
             throw new DBAppException("Table " + strTableName + " already exists!");
         }
-        TABLE_DIR.mkdirs();
         
         // Open metadata file
         FileWriter meta;
@@ -76,7 +83,9 @@ public class DBApp  {
                 String foreignTable = "null";
                 String foreignColumn = "null";
                 if (isForeignKey) {
-                    String[] data = htblForeignKeys.get(colName).split(".");
+                    String foreignID = htblForeignKeys.get(colName);
+                    String[] data = foreignID.split("\\.");
+                    System.out.println(Arrays.toString(data) + " " + colName);
                     foreignTable = data[0];
                     foreignColumn = data[1];
                 }
@@ -100,6 +109,7 @@ public class DBApp  {
             // Close metadata file
             meta.flush();
             meta.close();
+            TABLE_DIR.mkdirs();
         } catch (IOException e) {
             throw new DBAppException(e.getMessage());
         }
@@ -119,9 +129,14 @@ public class DBApp  {
         }
 
         loadTable(strTableName);
+
+        if (tblCurrent.indexExists(strarrColName[0]) || tblCurrent.indexExists(strarrColName[1])) {
+            throw new DBAppException("Index already exists for at least one of the following columns: " + strarrColName[0] + ", " + strarrColName[1]);
+        }
         
-        // TODO: Implement grid index on given 2 columns
+        // Implement grid index on given 2 columns
         GridIndex index = new GridIndex(tblCurrent, strarrColName[0], strarrColName[1]);
+        tblCurrent.addIndex(index);
     }
 
     /**
@@ -133,7 +148,7 @@ public class DBApp  {
     public void insertIntoTable(String strTableName, Hashtable<String,Object> htblColNameValue) throws DBAppException {
         loadTable(strTableName);
 
-        System.out.println("Inserting into table " + strTableName);
+        System.out.println("Inserting into table " + strTableName + ": " + htblColNameValue.get(tblCurrent.getClusteringKey()));
         tblCurrent.insertIntoTable(htblColNameValue);
     }
     
@@ -147,7 +162,7 @@ public class DBApp  {
     public void updateTable(String strTableName, String strClusteringKeyValue, Hashtable<String,Object> htblColNameValue ) throws DBAppException {
         loadTable(strTableName);
 
-        tblCurrent.updateTable(strTableName, strClusteringKeyValue, htblColNameValue);
+        tblCurrent.updateTable(strClusteringKeyValue, htblColNameValue);
     }
 
 

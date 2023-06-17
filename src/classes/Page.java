@@ -50,12 +50,12 @@ public class Page {
 
             pageFile.close();
         } catch (Exception e) {
-            System.err.println("Failed to load page " + intPageNum + " for table " + parentTable.getName());
+            System.err.println("Failed to load page " + intPageNum + " for table " + parentTable.getName() + "\nCause: " + e.getMessage());
         }
     }
 
     public boolean isFull() {
-        return arrTuples.size() == N;
+        return arrTuples.size() >= N;
     }
 
     // Linear start for insert
@@ -69,13 +69,10 @@ public class Page {
      * @throws DBAppException
      */
     public Hashtable<String, String> insertIntoPage(Hashtable<String,Object> htblColNameValue, int startIndex) throws DBAppException {
-        // Ensure page has space
-        if (this.isFull()) return null;
-
         // Insert into place based on clustering key
         int arrSize = arrTuples.size();
         if (arrSize < 1) {
-            arrTuples.add(stringify(htblColNameValue));
+            arrTuples.add(stringify(htblColNameValue, parentTable));
             isUpdated = true;
             return null;
         }
@@ -83,7 +80,7 @@ public class Page {
         // Iterate over all tuples in page starting from given index
         String colNameClusteringKey = parentTable.getClusteringKey();
         Hashtable<String, String> tempTuple = null;
-        for (int i = startIndex; i < arrSize; i++) {
+        for (int i = startIndex; i < arrSize && !isUpdated; i++) {
             String curr = arrTuples.get(i).get(colNameClusteringKey);
             Object insert = htblColNameValue.get(colNameClusteringKey);
 
@@ -96,7 +93,7 @@ public class Page {
 
             // Insert here
             if (compare == 1) {
-                tempTuple = stringify(htblColNameValue);
+                tempTuple = stringify(htblColNameValue, parentTable);
 
                 for (int j = i; j < arrSize; j++) {
                     Hashtable<String, String> next = arrTuples.get(j);
@@ -114,43 +111,53 @@ public class Page {
 
         // If reached end of file and not entered, then it must be the greatest
         if (!isUpdated) {
-            arrTuples.add(stringify(htblColNameValue));
+            arrTuples.add(stringify(htblColNameValue, parentTable));
             isUpdated = true;
             return null;
         }
 
         return tempTuple;
+    }
 
-        // TODO: Update grid index
+    public void updateTuple(int index, Hashtable<String, Object> newValues) {
+        Hashtable<String, String> currentTuple = arrTuples.get(index);
+        Hashtable<String, String> convertedValues = stringify(newValues, parentTable);
+
+        Enumeration<String> colNames = convertedValues.keys();
+        while (colNames.hasMoreElements()) {
+            String colName = colNames.nextElement();
+            currentTuple.replace(colName, convertedValues.get(colName));
+        }
+        isUpdated = true;
     }
 
     public void updatePage (String strClusteringKey, String strClusteringKeyValue, Hashtable<String,Object> htblColNameValue) throws DBAppException {  
 
-                    // Iterate over the tuples of the page looking for a tuple with the clustering key value 
-                    try {
-                    Enumeration<String> colName = htblColNameValue.keys();
-                    for (Hashtable<String, String> tuple : arrTuples) {
-                        if (tuple.get(strClusteringKey).equals(strClusteringKeyValue)) {
-                            while (colName.hasMoreElements()) {
-                                String nextCol = colName.nextElement();
-                                String colType = parentTable.getColType(nextCol);
-                                Functions.checkType(htblColNameValue.get(nextCol), colType);                                        
-                                
-                                String oldTupleValue = (String) tuple.get(nextCol);
-                                Object newTupleValue = htblColNameValue.get(nextCol);
-                                
-                                if (Functions.cmpObj(oldTupleValue, newTupleValue, colType) != 0) {
-                                tuple.put(nextCol, "" + newTupleValue); 
-                                this.isUpdated = true;
-                                break;
+        // Iterate over the tuples of the page looking for a tuple with the clustering key value 
+        try {
+            Enumeration<String> colNames = htblColNameValue.keys();
+            for (Hashtable<String, String> tuple : arrTuples) {
+                if (tuple.get(strClusteringKey).equals(strClusteringKeyValue)) {
+                    while (colNames.hasMoreElements()) {
+                        String nextCol = colNames.nextElement();
+                        String colType = parentTable.getColType(nextCol);
+                        Functions.checkType(htblColNameValue.get(nextCol), colType);                                        
+                        
+                        String oldTupleValue = (String) tuple.get(nextCol);
+                        Object newTupleValue = htblColNameValue.get(nextCol);
+                        
+                        if (Functions.cmpObj(oldTupleValue, newTupleValue, colType) != 0) {
+                            tuple.put(nextCol, "" + newTupleValue); 
+                            this.isUpdated = true;
+                            break;
 
-                                }
-                            }
                         }
                     }
-                } catch (Exception e) {
-                    e.printStackTrace();
                 }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public void deleteFromPage(Hashtable<String,Object> htblColNameValue) {
@@ -245,7 +252,7 @@ public class Page {
         return tuple;
     }
 
-    private Hashtable<String, String> stringify(Hashtable<String, Object> tempTuple) {
+    public static Hashtable<String, String> stringify(Hashtable<String, Object> tempTuple, Table parentTable) {
         Hashtable<String, String> result = new Hashtable<String, String>();
 
         // Iterate over the given columns
@@ -261,7 +268,7 @@ public class Page {
             String strCol = tempTuple.get(colName).toString();
 
             // If date, needs special formatting
-            if (parentTable.getColType(colName).equals("java.lang.Date")) {
+            if (parentTable.getColType(colName).equals("java.util.Date")) {
                 SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.YYYY");
                 strCol = dateFormat.format(tempTuple.get(colName));
             }
@@ -316,5 +323,18 @@ public class Page {
         }
 
         return -1;
+    }
+
+    public Hashtable<String, String> forceInsert(Hashtable<String, String> kickedOut) throws DBAppException {
+        // Parse it
+        Enumeration<String> colNames = kickedOut.keys();
+        Hashtable<String, Object> htblColNameValue = new Hashtable<String, Object>();
+        while (colNames.hasMoreElements()) {
+            String colName = colNames.nextElement();
+            Object parsed = GridIndex.strToObj(kickedOut.get(colName), parentTable.getColType(colName));
+            htblColNameValue.put(colName, parsed);
+        }
+
+        return insertIntoPage(htblColNameValue);
     }
 }

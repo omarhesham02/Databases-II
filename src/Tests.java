@@ -95,7 +95,11 @@ public class Tests {
         SQLTerm[] sqlTerms = new SQLTerm[] {sqlTerm, sqlTerm2, sqlTerm3};
         String[] strArrOperators = new String[] {"AND", "OR"};
 
-        dbApp.selectFromTable(sqlTerms, strArrOperators);
+        Iterator<String> i = dbApp.selectFromTable(sqlTerms, strArrOperators);
         
+        // Print out select results
+        while (i.hasNext()) {
+            System.out.println(i.next());
+        }
     }
 }

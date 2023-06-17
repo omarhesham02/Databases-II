@@ -1,6 +1,7 @@
 package src.classes;
 
 import java.io.*;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import src.DBApp;
 import src.exceptions.DBAppException;
@@ -251,7 +252,21 @@ public class Page {
         Enumeration<String> keys = tempTuple.keys();
         while (keys.hasMoreElements()) {
             String colName = keys.nextElement();
-            result.put(colName, "" + tempTuple.get(colName));
+
+            if (tempTuple.get(colName) == null) {
+                result.put(colName, null);
+                continue;
+            }
+
+            String strCol = tempTuple.get(colName).toString();
+
+            // If date, needs special formatting
+            if (parentTable.getColType(colName).equals("java.lang.Date")) {
+                SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.YYYY");
+                strCol = dateFormat.format(tempTuple.get(colName));
+            }
+
+            result.put(colName, strCol);
         }
 
         return result;
@@ -277,6 +292,11 @@ public class Page {
         return clusterMax;
     }
 
+    /**
+     * Find the index of a tuple with a given clustering key value.
+     * @param clusterValue
+     * @return index of tuple in this page, else {@code -1} if it doesn't exist 
+     */
     public int findIndex(Object clusterValue) {
         // Iterate over tuples in this page
         for (int i = 0; i < arrTuples.size(); i++) {

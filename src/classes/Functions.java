@@ -1,4 +1,6 @@
 package src.classes;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 import src.exceptions.DBAppException;
@@ -35,8 +37,12 @@ public class Functions {
                 return d1.compareTo(d2);
             }
             case "java.lang.Date": {
-                // TODO: Create formatter
-                Date d1 = Date.from(null);
+                String [] arrstrDate = o1.split(".");
+                int year = Integer.parseInt(arrstrDate[2]);
+                int month = Integer.parseInt(arrstrDate[1]);
+                int day = Integer.parseInt(arrstrDate[0]);
+                
+                Date d1 = new Date(year, month, day);
                 Date d2 = (Date) o2;
 
                 return d1.compareTo(d2);
@@ -74,7 +80,7 @@ public class Functions {
                 break;
             }
             case "java.lang.String": {
-
+                // TODO:
                 break;
             }
             case "java.lang.Double": {
@@ -91,7 +97,26 @@ public class Functions {
                 break;
             }
             case "java.lang.Date": {
+                // Get the difference in days between the min and max and divide it by the num of bounds
+                SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
+                returnBounds = new Date[numBounds + 1];
+                
+                try {
+                    long minTime = dateFormat.parse(min).getTime();
+                    long maxTime = dateFormat.parse(max).getTime();
+                    long step = (maxTime - minTime) / numBounds;
+                    
+                    // Iterate over bounds
+                    long currBound = minTime;
+                    for (int i = 0; i < numBounds; i++) {
+                        returnBounds[i] = new Date(currBound);
+                        currBound += step;
+                    }
+                    returnBounds[numBounds] = new Date(maxTime);
 
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
                 break;
             }
             default: {

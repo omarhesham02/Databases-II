@@ -5,6 +5,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Hashtable;
@@ -43,17 +45,105 @@ public class GridIndex {
      * Load an existing grid index
      * @param indexFile
      */
-    public GridIndex (Table parentTable, String indexName) {
+    public GridIndex (Table parentTable, String indexName) throws DBAppException{
         System.out.println("Reading index " + indexName + " for table " + parentTable.getName());
         
         this.parentTable = parentTable;
         this.indexName = indexName;
         this.INDEX_PATH = new File("./src/indices/" + parentTable.getName() + "/" + indexName + ".txt");
 
-        // Get column names from index
+        if (!INDEX_PATH.exists()) {
+            throw new DBAppException("Cannot load index " + indexName + "\nFile does not exist.");
+        }
+
+        BufferedReader br;
+        try {
+            br = new BufferedReader(new FileReader(INDEX_PATH));
+            String line = br.readLine();
+
+            String [] colNames = line.split(",");
+            this.strColNamex = colNames[0];
+            this.strColNamey = colNames[1];
+
+            line = br.readLine();
+            this.xBounds = parseBounds(line.split(","),  parentTable.getColType(strColNamex));
+            line = br.readLine();
+            this.yBounds = parseBounds(line.split(","),  parentTable.getColType(strColNamey));
+
+            // Loop over grid
+            for (int i = 0; i < NUM_BOUNDS; i++) {
+                // Loop each row
+                String[] row = br.readLine().split(",");
+                for (int j = 0; j < NUM_BOUNDS; j++) {
+                    // Loop each point of row
+                    String[] points = row[j].split(";");
+                    for (int k = 0; k < points.length; k++) {
+                        if (points[k].equals("NULL")) continue;
+
+                        String[] pointSplit = points[k].split("|");
+                        int page = Integer.parseInt(pointSplit[0]);
+                        int index = Integer.parseInt(pointSplit[2]);
+
+                        // Add tuple to grid
+                        if (gridPoints[j][i] == null) {
+                            gridPoints[j][i] = new GridPoint(page, index);
+                            continue;
+                        }
+
+                        GridPoint curr = gridPoints[j][i];
+                        while (curr.next != null) {
+                            curr = curr.next;
+                        }
+                        curr.next = new GridPoint(page, index);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
-    // TODO:
+    private Object[] parseBounds(String[] arrstrBounds, String colType) {
+        Object[] result = null;
+        switch (colType) {
+            case "java.lang.String": {
+                return arrstrBounds;
+            }
+            case "java.lang.Integer": {
+                result = new Integer[arrstrBounds.length];
+
+                for (int i = 0; i < arrstrBounds.length; i++) {
+                    result [i] = Integer.parseInt(arrstrBounds[i]);
+                }
+
+                break;
+            }
+            case "java.lang.Double": {
+                result = new Double[arrstrBounds.length];
+
+                for (int i = 0; i < arrstrBounds.length; i++) {
+                    result [i] = Double.parseDouble(arrstrBounds[i]);
+                }
+
+                break;
+            }
+            case "java.lang.Date": {
+                result = new Date[arrstrBounds.length];
+                SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
+
+                try {
+                    for (int i = 0; i < arrstrBounds.length; i++) {
+                        result [i] = dateFormat.parse(arrstrBounds[i]);
+                    }
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+                break;
+            }
+        }
+        return result;
+    }
+
     private void initialize() throws DBAppException {
         this.isUpdated = true;
         
@@ -127,7 +217,6 @@ public class GridIndex {
         }
     }
 
-    // TODO
     public void save() {
         if (!isUpdated) return;
 
@@ -153,6 +242,15 @@ public class GridIndex {
 
     }
 
+    private String objToString(Object x) {
+        if (x instanceof Date) {
+            SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
+            return dateFormat.format(x);
+        }
+
+        return x.toString();
+    }
+
     /**
      * Converts this grid index into a string in the following format:
      * 
@@ -168,16 +266,16 @@ public class GridIndex {
         String result = strColNamex + "," + strColNamey + "\n";
 
         // Column x bounds
-        result += xBounds[0].toString();   
+        result += objToString(xBounds[0]);   
         for (int i = 1; i < xBounds.length; i++) {
-            result += "," + xBounds[i];
+            result += "," + objToString(xBounds[i]);
         }
         result += "\n";
         
         // Column y bounds
-        result += yBounds[0].toString();   
+        result += objToString(yBounds[0]);   
         for (int i = 1; i < yBounds.length; i++) {
-            result += "," + yBounds[i];
+            result += "," + objToString(yBounds[i]);
         }
         result += "\n";
         

@@ -16,6 +16,7 @@ public class Table {
     private Hashtable<String, String> htblColNameForeignTable = new Hashtable<String, String>();
     private Hashtable<String, String> htblColNameForeignColumnName = new Hashtable<String, String>();
     private Hashtable<String, Boolean> htblColNameComputed = new Hashtable<String, Boolean>();
+    private Hashtable<String, GridIndex> htblIndexNameIndex = new Hashtable<String, GridIndex>();
     private File TABLE_DIR;
     private int numPages;
 
@@ -35,7 +36,11 @@ public class Table {
         loadMetadata();
     }
 
-    public void loadMetadata() {
+    private void loadIndex(String indexName) throws DBAppException{
+        htblIndexNameIndex.put(indexName, new GridIndex(this, indexName));
+    }
+
+    public void loadMetadata() throws DBAppException {
         System.out.println("Loading table " + this.strTableName + "'s properties from metadata...");
 
         this.htblColNameType.clear();
@@ -50,7 +55,8 @@ public class Table {
         
         // Get table data from meta data
         String line = "";  
-        String splitBy = ",";  
+        String splitBy = ",";
+        ArrayList<String> indexNames = new ArrayList<String>();
         try {
             // Iterate over rows in metadata
             BufferedReader br = new BufferedReader(new FileReader("./src/metadata.csv"));  
@@ -75,9 +81,19 @@ public class Table {
                 htblColNameForeignTable.put(colName, row[9]);
                 htblColNameForeignColumnName.put(colName, row[10]);
                 htblColNameComputed.put(colName, Boolean.parseBoolean(row[11]));
-            }
 
+                // If index exists for col, load it
+                if (!row[4].equals("null")) {
+                    if (indexNames.contains(row[4])) continue;
+
+                    indexNames.add(row[4]);
+                }
+            }
+            
             br.close();
+            for (String s: indexNames) {
+                loadIndex(s);
+            }
             
         } catch (IOException e) {  
             e.printStackTrace();  
@@ -104,6 +120,15 @@ public class Table {
             String colName = keys.nextElement();
             String colType = this.htblColNameType.get(colName);
             Object objValue = htblColNameValue.get(colName);
+
+            // Check if computed column
+            if (htblColNameComputed.get(colName)) {
+                throw new DBAppException("User cannot enter value for computed column " + colName);
+            }
+
+            // Check same type
+            if (objValue == null) continue;
+            Functions.checkType(objValue, colType);
             
             // Check if foreign key exists in foreign table
             Boolean foreignKey = this.htblColNameForeignKey.get(colName);
@@ -119,17 +144,19 @@ public class Table {
                 }
             }
 
-            // Check same type
-            if (objValue == null) continue;
-
-            Functions.checkType(objValue, colType);
-
             // Check Min Max
             int cmpValueMax = Functions.cmpObj((String) htblColNameMax.get(colName), objValue, colType);
             int cmpValueMin = Functions.cmpObj((String) htblColNameMin.get(colName), objValue, colType);
             if (cmpValueMax < 0 || cmpValueMin > 0) {
                 throw new DBAppException("Cannot insert.\nValue passed was out of bounds for column " + colType);
             }
+        }
+
+        // !Force load null into computed column values
+        Iterator<String> compCols = getComputedCols();
+        while (compCols.hasNext()) {
+            String colName = compCols.next();
+            htblColNameValue.put(colName, null);
         }
 
         // Call insert in page
@@ -162,6 +189,21 @@ public class Table {
             p.close();
         }
 
+    }
+
+    private Iterator<String> getComputedCols() {
+        ArrayList<String> result = new ArrayList<String>();
+
+        Enumeration<String> keys = htblColNameType.keys();
+        while (keys.hasMoreElements()) {
+            String colName = keys.nextElement();
+            if (htblColNameComputed.get(colName)) {
+                result.add(colName);
+            }
+        }
+
+
+        return result.iterator();
     }
 
  /**
